@@ -6,6 +6,7 @@ let currentKdkmp = null;
 let barangList = [];
 let opnameData = {};
 let currentMasterList = [];
+let allLowStockListAdmin = [];
 
 document.addEventListener("DOMContentLoaded", function () {
     const savedUser = sessionStorage.getItem("kdkmpUser");
@@ -114,19 +115,27 @@ function renderDashboardInfo() {
     document.getElementById("infoPic").textContent = currentKdkmp.pic;
     document.getElementById("statBarang").textContent = barangList.length;
 
-    checkAndRenderLowStock();
+    const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
+    const adminFilterWrapper = document.getElementById("adminLowStockFilterWrapper");
+
+    if (isAdmin) {
+        if (adminFilterWrapper) adminFilterWrapper.classList.remove("hidden");
+        loadAdminLowStockData();
+    } else {
+        if (adminFilterWrapper) adminFilterWrapper.classList.add("hidden");
+        document.querySelectorAll(".col-kdkmp-admin").forEach(el => el.classList.add("hidden"));
+        checkAndRenderLowStockLocal();
+    }
 }
 
-function checkAndRenderLowStock() {
+function checkAndRenderLowStockLocal() {
     const alertSection = document.getElementById("lowStockAlertSection");
     const alertBody = document.getElementById("lowStockTableBody");
     const statMenipisEl = document.getElementById("statMenipis");
 
     const lowStockItems = barangList.filter(item => Number(item.stokSystem) < MINIMUM_STOCK_THRESHOLD);
 
-    if (statMenipisEl) {
-        statMenipisEl.textContent = lowStockItems.length;
-    }
+    if (statMenipisEl) statMenipisEl.textContent = lowStockItems.length;
 
     if (lowStockItems.length > 0) {
         if (alertSection) alertSection.classList.remove("hidden");
@@ -139,6 +148,78 @@ function checkAndRenderLowStock() {
 
             html += `
             <tr>
+                <td><strong>${item.kode}</strong></td>
+                <td>${item.nama}</td>
+                <td>${item.kategori}</td>
+                <td><strong style="color: var(--red);">${item.stokSystem} ${item.satuan}</strong></td>
+                <td><span class="status-badge ${badgeClass}" style="background: ${isZero ? '#fef2f2' : '#fffbeb'}; padding: 4px 8px; border-radius: 6px;">${badgeText}</span></td>
+            </tr>`;
+        });
+
+        if (alertBody) alertBody.innerHTML = html;
+    } else {
+        if (alertSection) alertSection.classList.add("hidden");
+    }
+}
+
+function loadAdminLowStockData() {
+    fetch(`${API_URL}?action=getAllKdkmpList`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById("adminLowStockSelect");
+            select.innerHTML = '<option value="ALL">Semua KDKMP</option>';
+            data.list.forEach(k => {
+                select.innerHTML += `<option value="${k.id}">${k.nama} (${k.id})</option>`;
+            });
+        }
+    });
+
+    fetch(`${API_URL}?action=getAllLowStock`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            allLowStockListAdmin = data.list;
+            renderAdminLowStockTable(allLowStockListAdmin);
+        }
+    });
+}
+
+function filterLowStockByAdmin(selectedKdkmpId) {
+    if (selectedKdkmpId === "ALL") {
+        renderAdminLowStockTable(allLowStockListAdmin, true);
+    } else {
+        const filtered = allLowStockListAdmin.filter(item => item.kdkmpId === selectedKdkmpId);
+        renderAdminLowStockTable(filtered, false);
+    }
+}
+
+function renderAdminLowStockTable(list, isAllView = true) {
+    const alertSection = document.getElementById("lowStockAlertSection");
+    const alertBody = document.getElementById("lowStockTableBody");
+    const statMenipisEl = document.getElementById("statMenipis");
+    const colKdkmp = document.querySelectorAll(".col-kdkmp-admin");
+
+    if (statMenipisEl) statMenipisEl.textContent = list.length;
+
+    if (list.length > 0) {
+        if (alertSection) alertSection.classList.remove("hidden");
+
+        if (isAllView) {
+            colKdkmp.forEach(el => el.classList.remove("hidden"));
+        } else {
+            colKdkmp.forEach(el => el.classList.add("hidden"));
+        }
+
+        let html = "";
+        list.forEach(item => {
+            const isZero = Number(item.stokSystem) <= 0;
+            const badgeClass = isZero ? "text-danger" : "text-warning";
+            const badgeText = isZero ? "HABIS" : "MENIPIS";
+
+            html += `
+            <tr>
+                ${isAllView ? `<td><span class="status-badge" style="background: #eef0f3;">${item.kdkmpNama}</span></td>` : ''}
                 <td><strong>${item.kode}</strong></td>
                 <td>${item.nama}</td>
                 <td>${item.kategori}</td>

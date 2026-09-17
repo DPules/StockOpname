@@ -137,24 +137,37 @@
                     </div>
                 </div>
 
-                <!-- WIDGET PERINGATAN STOK MENIPIS -->
+                <!-- WIDGET PERINGATAN STOK MENIPIS / HABIS -->
                 <div id="lowStockAlertSection" class="section-card hidden"
                     style="border: 2px solid var(--red); margin-bottom: 16px;">
-                    <div class="section-header" style="background: #fef2f2;">
+                    <div class="section-header" style="background: #fef2f2; flex-wrap: wrap; gap: 12px;">
                         <div>
                             <h3 style="color: var(--red); display: flex; align-items: center; gap: 8px;">
-                                <span>⚠️</span> Peringatan Stok Menipis
+                                <span>⚠️</span> Peringatan Stok Menipis / Habis
                             </h3>
-                            <p>Daftar item barang dengan jumlah stok sistem di bawah 10 pcs</p>
+                            <p id="lowStockSubtitle">Daftar item barang dengan jumlah stok di bawah 10 pcs</p>
                         </div>
-                        <button class="btn btn-secondary" style="color: var(--red);" onclick="showPage('masterPage')">
-                            Lihat Katalog
-                        </button>
+
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <!-- DROPDOWN KHUSUS ADMIN UNTUK FILTER STOK MENIPIS PER KDKMP -->
+                            <div id="adminLowStockFilterWrapper" class="hidden" style="min-width: 180px;">
+                                <select id="adminLowStockSelect" onchange="filterLowStockByAdmin(this.value)"
+                                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
+                                    <option value="ALL">Semua KDKMP</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-secondary" style="color: var(--red);"
+                                onclick="showPage('masterPage')">
+                                Lihat Katalog
+                            </button>
+                        </div>
                     </div>
                     <div class="table-wrapper">
                         <table>
                             <thead>
                                 <tr>
+                                    <th class="col-kdkmp-admin hidden">KDKMP</th>
                                     <th>Kode Barang</th>
                                     <th>Nama Barang</th>
                                     <th>Kategori</th>
@@ -164,7 +177,7 @@
                             </thead>
                             <tbody id="lowStockTableBody">
                                 <tr>
-                                    <td colspan="5" class="empty-state">Mengecek stok barang...</td>
+                                    <td colspan="6" class="empty-state">Mengecek stok barang...</td>
                                 </tr>
                             </tbody>
                         </table>
