@@ -1,18 +1,13 @@
-// =========================================================
-// URL Deployment Apps Script (URL Web App Publik)
-// =========================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbxF4OWQxWw-AO1Tq1Zq80eG75Oi5emHDYDjr_8QVoOHkvx365ew3XMhnBjlxf9yFbBdoQ/exec";
+const MINIMUM_STOCK_THRESHOLD = 10;
 
 let currentUser = null;
 let currentKdkmp = null;
 let barangList = [];
 let opnameData = {};
+let currentMasterList = [];
 
-/* =========================
-   INITIALIZATION & LISTENERS
-========================= */
 document.addEventListener("DOMContentLoaded", function () {
-    // Sesi Login dari Storage
     const savedUser = sessionStorage.getItem("kdkmpUser");
     if (savedUser) {
         try {
@@ -23,13 +18,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Listener Form Login
     const loginForm = document.getElementById("loginForm");
-    if (loginForm) {
-        loginForm.addEventListener("submit", login);
-    }
+    if (loginForm) loginForm.addEventListener("submit", login);
 
-    // Listener Toolbar Pencarian & Filter Kategori
     const searchInput = document.getElementById("barangSearch");
     const categorySelect = document.getElementById("kategoriFilter");
 
@@ -37,21 +28,15 @@ document.addEventListener("DOMContentLoaded", function () {
         searchInput.addEventListener("input", filterBarang);
         searchInput.addEventListener("keyup", filterBarang);
     }
-    if (categorySelect) {
-        categorySelect.addEventListener("change", filterBarang);
-    }
+    if (categorySelect) categorySelect.addEventListener("change", filterBarang);
 });
 
-// Otomatis sorot seluruh teks saat kolom input angka di-tap pada HP
 document.addEventListener("focusin", function (e) {
     if (e.target && e.target.tagName === "INPUT" && e.target.type === "number") {
         e.target.select();
     }
 });
 
-/* =========================
-   AUTHENTICATION & SESSION
-========================= */
 function login(e) {
     e.preventDefault();
     const username = document.getElementById("username").value.trim();
@@ -67,11 +52,7 @@ function login(e) {
     fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-            action: "login",
-            username: username,
-            password: password
-        })
+        body: JSON.stringify({ action: "login", username: username, password: password })
     })
     .then(res => res.json())
     .then(result => {
@@ -85,7 +66,7 @@ function login(e) {
     })
     .catch(err => {
         console.error("Login Error:", err);
-        showLoginMessage("Gagal terhubung ke server. Periksa koneksi internet.");
+        showLoginMessage("Gagal terhubung ke server.");
     });
 }
 
@@ -107,9 +88,6 @@ function logout() {
     location.reload();
 }
 
-/* =========================
-   DATA FETCHING & RENDER
-========================= */
 function loadInitialData() {
     fetch(`${API_URL}?action=getInitialData&kdkmpId=${currentUser.kdkmpId}`)
     .then(res => res.json())
@@ -118,15 +96,10 @@ function loadInitialData() {
             currentKdkmp = data.kdkmp;
             barangList = data.barang;
             renderDashboardInfo();
-            loadDraft(); // Muat draft terisolasi khusus KDKMP ini
+            loadDraft();
             renderBarangInput();
             renderKategoriFilter();
-            renderMasterTable();
         }
-    })
-    .catch(err => {
-        console.error("Fetch Data Error:", err);
-        showToast("Gagal mengambil data dari server.");
     });
 }
 
@@ -139,8 +112,45 @@ function renderDashboardInfo() {
     document.getElementById("infoKecamatan").textContent = currentKdkmp.kecamatan;
     document.getElementById("infoKabupaten").textContent = currentKdkmp.kabupaten;
     document.getElementById("infoPic").textContent = currentKdkmp.pic;
-
     document.getElementById("statBarang").textContent = barangList.length;
+
+    checkAndRenderLowStock();
+}
+
+function checkAndRenderLowStock() {
+    const alertSection = document.getElementById("lowStockAlertSection");
+    const alertBody = document.getElementById("lowStockTableBody");
+    const statMenipisEl = document.getElementById("statMenipis");
+
+    const lowStockItems = barangList.filter(item => Number(item.stokSystem) < MINIMUM_STOCK_THRESHOLD);
+
+    if (statMenipisEl) {
+        statMenipisEl.textContent = lowStockItems.length;
+    }
+
+    if (lowStockItems.length > 0) {
+        if (alertSection) alertSection.classList.remove("hidden");
+
+        let html = "";
+        lowStockItems.forEach(item => {
+            const isZero = Number(item.stokSystem) <= 0;
+            const badgeClass = isZero ? "text-danger" : "text-warning";
+            const badgeText = isZero ? "HABIS" : "MENIPIS";
+
+            html += `
+            <tr>
+                <td><strong>${item.kode}</strong></td>
+                <td>${item.nama}</td>
+                <td>${item.kategori}</td>
+                <td><strong style="color: var(--red);">${item.stokSystem} ${item.satuan}</strong></td>
+                <td><span class="status-badge ${badgeClass}" style="background: ${isZero ? '#fef2f2' : '#fffbeb'}; padding: 4px 8px; border-radius: 6px;">${badgeText}</span></td>
+            </tr>`;
+        });
+
+        if (alertBody) alertBody.innerHTML = html;
+    } else {
+        if (alertSection) alertSection.classList.add("hidden");
+    }
 }
 
 function renderKategoriFilter() {
@@ -165,10 +175,7 @@ function renderBarangInput() {
         const searchText = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
 
         html += `
-        <div class="barang-card" 
-             id="card-${item.kode}" 
-             data-search="${searchText}" 
-             data-category="${item.kategori || ''}">
+        <div class="barang-card" id="card-${item.kode}" data-search="${searchText}" data-category="${item.kategori || ''}">
             <div class="barang-top">
                 <div class="barang-info">
                     <div class="barang-code">${item.kode}</div>
@@ -182,22 +189,10 @@ function renderBarangInput() {
             </div>
             
             <div class="stock-input-area">
-                <div class="input-box">
-                    <label>Fisik (CTN)</label>
-                    <input type="number" min="0" placeholder="0" value="${saved.ctn}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})">
-                </div>
-                <div class="input-box">
-                    <label>Fisik (PCS)</label>
-                    <input type="number" min="0" placeholder="0" value="${saved.pcs}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})">
-                </div>
-                <div class="result-box">
-                    <span>Total Fisik</span>
-                    <strong id="total-${item.kode}">${saved.total} ${item.satuan}</strong>
-                </div>
-                <div class="result-box">
-                    <span>Selisih</span>
-                    <strong id="selisih-${item.kode}">${saved.total - item.stokSystem}</strong>
-                </div>
+                <div class="input-box"><label>Fisik (CTN)</label><input type="number" min="0" placeholder="0" value="${saved.ctn}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})"></div>
+                <div class="input-box"><label>Fisik (PCS)</label><input type="number" min="0" placeholder="0" value="${saved.pcs}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})"></div>
+                <div class="result-box"><span>Total Fisik</span><strong id="total-${item.kode}">${saved.total} ${item.satuan}</strong></div>
+                <div class="result-box"><span>Selisih</span><strong id="selisih-${item.kode}">${saved.total - item.stokSystem}</strong></div>
             </div>
         </div>`;
     });
@@ -206,56 +201,167 @@ function renderBarangInput() {
     updateProgress();
 }
 
-function renderMasterTable() {
-    const tableBody = document.getElementById("masterTable");
-    if (!tableBody) return;
-
-    let html = "";
-    barangList.forEach(item => {
-        html += `
-        <tr>
-            <td><strong>${item.kode}</strong></td>
-            <td>${item.nama}</td>
-            <td>${item.kategori}</td>
-            <td>${item.isiCtn}</td>
-            <td>${item.satuan}</td>
-            <td><strong>${item.stokSystem}</strong></td>
-        </tr>`;
-    });
-
-    tableBody.innerHTML = html || '<tr><td colspan="6">Data kosong</td></tr>';
-}
-
-/* =========================
-   PENCARIAN & FILTER
-========================= */
 function filterBarang() {
     const searchInput = document.getElementById("barangSearch");
     const categorySelect = document.getElementById("kategoriFilter");
 
     const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : "";
     const categoryValue = categorySelect ? categorySelect.value : "";
-
     const cards = document.querySelectorAll("#barangContainer .barang-card");
 
     cards.forEach(card => {
-        const itemDataSearch = card.getAttribute("data-search") || "";
-        const itemCategory = card.getAttribute("data-category") || "";
+        const matchSearch = (card.getAttribute("data-search") || "").includes(searchValue);
+        const matchCategory = !categoryValue || card.getAttribute("data-category") === categoryValue;
+        card.classList.toggle("hidden", !(matchSearch && matchCategory));
+    });
+}
 
-        const matchSearch = itemDataSearch.includes(searchValue);
-        const matchCategory = !categoryValue || itemCategory === categoryValue;
+function loadPendingUsers() {
+    const section = document.getElementById("pendingUserSection");
+    const tbody = document.getElementById("pendingUserTableBody");
 
-        if (matchSearch && matchCategory) {
-            card.classList.remove("hidden");
+    fetch(`${API_URL}?action=getPendingUsers`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.list.length > 0) {
+            section.classList.remove("hidden");
+            let html = "";
+            data.list.forEach(u => {
+                html += `
+                <tr>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.name}</td>
+                    <td>${u.role}</td>
+                    <td>${u.kdkmpId}</td>
+                    <td>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px !important;" onclick="verifyUser('${u.username}', 'APPROVED')">Setujui</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px !important; color: var(--red);" onclick="verifyUser('${u.username}', 'REJECTED')">Tolak</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         } else {
-            card.classList.add("hidden");
+            section.classList.add("hidden");
         }
     });
 }
 
-/* =========================
-   PERHITUNGAN & DRAFT ISOLATED
-========================= */
+function verifyUser(username, status) {
+    showToast("Memproses verifikasi...");
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "verifyUser", username: username, status: status })
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+            showToast(res.message);
+            loadPendingUsers();
+        } else {
+            showToast("Gagal: " + res.message);
+        }
+    });
+}
+
+function loadMasterPageData() {
+    const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
+    const filterWrapper = document.getElementById("adminKdkmpFilterWrapper");
+    
+    if (isAdmin) {
+        if (filterWrapper) filterWrapper.classList.remove("hidden");
+        loadPendingUsers();
+        loadAdminMasterKdkmpOptions();
+    } else {
+        if (filterWrapper) filterWrapper.classList.add("hidden");
+        document.getElementById("pendingUserSection").classList.add("hidden");
+        fetchMasterData(currentUser.kdkmpId);
+    }
+}
+
+function loadAdminMasterKdkmpOptions() {
+    fetch(`${API_URL}?action=getAllKdkmpList`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById("adminKdkmpSelect");
+            select.innerHTML = '<option value="">-- Pilih KDKMP --</option>';
+            data.list.forEach(k => select.innerHTML += `<option value="${k.id}">${k.nama} (${k.id})</option>`);
+
+            if (data.list.length > 0 && !select.value) {
+                select.value = data.list[0].id;
+                loadMasterByAdmin(data.list[0].id);
+            }
+        }
+    });
+}
+
+function loadMasterByAdmin(kdkmpId) {
+    if (!kdkmpId) return;
+    const select = document.getElementById("adminKdkmpSelect");
+    document.getElementById("masterSubtitle").textContent = `Menampilkan Master Katalog: ${select.options[select.selectedIndex].text}`;
+    fetchMasterData(kdkmpId);
+}
+
+function fetchMasterData(kdkmpId) {
+    const tbody = document.getElementById("masterTableBody");
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Memuat data barang...</td></tr>';
+
+    fetch(`${API_URL}?action=getBarangByKdkmp&kdkmpId=${kdkmpId}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.barang.length > 0) {
+            currentMasterList = data.barang;
+            renderMasterKategoriFilter(currentMasterList);
+            renderMasterTable(currentMasterList);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Tidak ada data master barang.</td></tr>';
+        }
+    });
+}
+
+function renderMasterKategoriFilter(list) {
+    const kategoris = [...new Set(list.map(item => item.kategori))];
+    const select = document.getElementById("masterKategoriFilter");
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Semua Kategori</option>';
+    kategoris.forEach(kat => {
+        if (kat) select.innerHTML += `<option value="${kat}">${kat}</option>`;
+    });
+}
+
+function renderMasterTable(list) {
+    const tbody = document.getElementById("masterTableBody");
+    let html = "";
+    
+    list.forEach(item => {
+        html += `
+        <tr class="master-row" data-search="${item.kode.toLowerCase()} ${item.nama.toLowerCase()} ${item.kategori.toLowerCase()}" data-category="${item.kategori || ''}">
+            <td><strong>${item.kode}</strong></td>
+            <td>${item.nama}</td>
+            <td>${item.kategori}</td>
+            <td>${item.isiCtn}</td>
+            <td>${item.satuan}</td>
+            <td><strong style="color: var(--primary);">${item.stokSystem} ${item.satuan}</strong></td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="6" class="empty-state">Data tidak ditemukan.</td></tr>';
+}
+
+function filterMasterTable() {
+    const searchValue = (document.getElementById("masterSearch")?.value || "").toLowerCase().trim();
+    const categoryValue = document.getElementById("masterKategoriFilter")?.value || "";
+    const rows = document.querySelectorAll("#masterTableBody .master-row");
+
+    rows.forEach(row => {
+        const matchSearch = (row.getAttribute("data-search") || "").includes(searchValue);
+        const matchCategory = !categoryValue || row.getAttribute("data-category") === categoryValue;
+        row.classList.toggle("hidden", !(matchSearch && matchCategory));
+    });
+}
+
 function calculateItem(kode, isiCtn, stokSystem) {
     const card = document.getElementById(`card-${kode}`);
     const inputs = card.querySelectorAll("input");
@@ -271,14 +377,7 @@ function calculateItem(kode, isiCtn, stokSystem) {
     selisihEl.textContent = selisih > 0 ? `+${selisih}` : selisih;
     selisihEl.className = selisih === 0 ? "status-sesuai" : (selisih < 0 ? "text-danger" : "text-warning");
 
-    opnameData[kode] = {
-        kode: kode,
-        ctn: ctn,
-        pcs: pcs,
-        stokSystem: stokSystem,
-        stokFisik: totalFisik
-    };
-
+    opnameData[kode] = { kode: kode, ctn: ctn, pcs: pcs, stokSystem: stokSystem, stokFisik: totalFisik };
     updateProgress();
 }
 
@@ -294,34 +393,26 @@ function updateProgress() {
 
 function saveDraft() {
     if (!currentUser || !currentUser.kdkmpId) return;
-    const draftKey = `opnameDraft_${currentUser.kdkmpId}`;
-    localStorage.setItem(draftKey, JSON.stringify(opnameData));
+    localStorage.setItem(`opnameDraft_${currentUser.kdkmpId}`, JSON.stringify(opnameData));
     showToast(`Draft opname KDKMP ${currentKdkmp.nama} berhasil disimpan!`);
 }
 
 function loadDraft() {
     if (!currentUser || !currentUser.kdkmpId) return;
-    const draftKey = `opnameDraft_${currentUser.kdkmpId}`;
-    const savedDraft = localStorage.getItem(draftKey);
+    const savedDraft = localStorage.getItem(`opnameDraft_${currentUser.kdkmpId}`);
     if (savedDraft) {
         try {
             opnameData = JSON.parse(savedDraft);
-            showToast("Draft opname sebelumnya berhasil dimuat.");
-        } catch (e) {
-            console.error("Gagal muat draft:", e);
-        }
+            showToast("Draft opname sebelumnya dimuat.");
+        } catch (e) {}
     }
 }
 
 function clearDraft() {
     if (!currentUser || !currentUser.kdkmpId) return;
-    const draftKey = `opnameDraft_${currentUser.kdkmpId}`;
-    localStorage.removeItem(draftKey);
+    localStorage.removeItem(`opnameDraft_${currentUser.kdkmpId}`);
 }
 
-/* =========================
-   SUBMIT OPNAME
-========================= */
 function submitOpname() {
     const items = Object.values(opnameData);
     if (items.length === 0) {
@@ -333,12 +424,7 @@ function submitOpname() {
         fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "submitOpname",
-                kdkmpId: currentKdkmp.id,
-                petugas: currentUser.name,
-                items: items
-            })
+            body: JSON.stringify({ action: "submitOpname", kdkmpId: currentKdkmp.id, petugas: currentUser.name, items: items })
         })
         .then(res => res.json())
         .then(res => {
@@ -350,10 +436,6 @@ function submitOpname() {
             } else {
                 showToast("Gagal: " + res.message);
             }
-        })
-        .catch(err => {
-            console.error("Submit Error:", err);
-            showToast("Gagal terhubung ke server.");
         });
     });
 }
@@ -382,21 +464,33 @@ function loadHistory() {
             });
             tbody.innerHTML = html;
         } else {
-            tbody.innerHTML = '<tr><td colspan="7">Belum ada riwayat opname untuk KDKMP ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Belum ada riwayat opname.</td></tr>';
         }
     });
 }
 
-/* =========================
-   NAVIGASI & UI HELPERS
-========================= */
-function startNewOpname() {
-    showPage("opnamePage");
+function togglePasswordVisibility(inputId, btnEl, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    if (input.type === "password") {
+        input.type = "text";
+        btnEl.textContent = "🙈";
+    } else {
+        input.type = "password";
+        btnEl.textContent = "👁️";
+    }
 }
+
+function startNewOpname() { showPage("opnamePage"); }
 
 function showPage(pageId, btnEl) {
     document.querySelectorAll(".content-page").forEach(p => p.classList.add("hidden"));
-    
     const targetPage = document.getElementById(pageId);
     if (targetPage) targetPage.classList.remove("hidden");
 
@@ -406,28 +500,19 @@ function showPage(pageId, btnEl) {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     if (pageId === "historyPage") loadHistory();
-
-    if (window.innerWidth <= 900) {
-        toggleSidebar(false);
-    }
+    if (pageId === "masterPage") loadMasterPageData();
+    if (window.innerWidth <= 900) toggleSidebar(false);
 }
 
 function toggleSidebar(forceState) {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
-
     if (!sidebar || !overlay) return;
 
     if (forceState !== undefined) {
-        if (forceState) {
-            sidebar.classList.add("open");
-            overlay.classList.remove("hidden");
-        } else {
-            sidebar.classList.remove("open");
-            overlay.classList.add("hidden");
-        }
+        sidebar.classList.toggle("open", forceState);
+        overlay.classList.toggle("hidden", !forceState);
     } else {
         const isOpen = sidebar.classList.toggle("open");
         overlay.classList.toggle("hidden", !isOpen);
@@ -453,24 +538,15 @@ function showToast(msg) {
 }
 
 function showConfirmModal(title, msg, onConfirm) {
-    const modalTitle = document.getElementById("modalTitle");
-    const modalMsg = document.getElementById("modalMessage");
-    const modal = document.getElementById("confirmModal");
-    const confirmBtn = document.getElementById("modalConfirmButton");
-
-    if (modalTitle) modalTitle.textContent = title;
-    if (modalMsg) modalMsg.textContent = msg;
-    if (modal) modal.classList.remove("hidden");
-
-    if (confirmBtn) {
-        confirmBtn.onclick = function () {
-            closeModal();
-            onConfirm();
-        };
-    }
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalMessage").textContent = msg;
+    document.getElementById("confirmModal").classList.remove("hidden");
+    document.getElementById("modalConfirmButton").onclick = function () {
+        closeModal();
+        onConfirm();
+    };
 }
 
 function closeModal() {
-    const modal = document.getElementById("confirmModal");
-    if (modal) modal.classList.add("hidden");
+    document.getElementById("confirmModal").classList.add("hidden");
 }

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendaftaran User KDKMP</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card" style="max-width: 450px;">
+            <div class="logo-box">
+                <div class="logo-icon">K</div>
+            </div>
+            <h1>Pendaftaran User</h1>
+            <p class="subtitle">Buat akun petugas / admin KDKMP baru</p>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="Contoh: citaman01" required
+                        autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regPassword" placeholder="Buat password aman" required
+                            autocomplete="new-password">
+                        <button type="button" class="toggle-password"
+                            onclick="togglePasswordVisibility('regPassword', this, event)">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nama Lengkap / PIC</label>
+                    <input type="text" id="regName" placeholder="Contoh: Deris Putra Lesmana" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Role / Hak Akses</label>
+                    <select id="regRole"
+                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                        <option value="Petugas">Petugas / PIC KDKMP</option>
+                        <option value="Admin">Admin Pusat</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Pilih KDKMP</label>
+                    <select id="regKdkmpId"
+                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                        <option value="">Memuat daftar KDKMP...</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" style="margin-top: 10px;">DAFTAR AKUN</button>
+            </form>
+
+            <div id="registerMessage" class="message"></div>
+
+            <div style="text-align: center; margin-top: 20px; font-size: 13px;">
+                <span style="color: var(--muted);">Sudah punya akun?</span>
+                <a href="index.html" style="color: var(--primary); font-weight: bold; text-decoration: none;"> Login di
+                    sini</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="register.js"></script>
+</body>
+
+</html>

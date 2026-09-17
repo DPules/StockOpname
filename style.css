@@ -1,6 +1,3 @@
-/* =========================================================
-   1. CORE & RESET STYLES
-========================================================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -12,18 +9,15 @@
     --primary: #7b1e2b;
     --primary-dark: #5e1520;
     --primary-light: #f7e8eb;
-
     --green: #198754;
     --orange: #f59e0b;
     --red: #dc3545;
     --blue: #2563eb;
-
     --bg: #f5f6f8;
     --white: #ffffff;
     --text: #202124;
     --muted: #6b7280;
     --border: #e5e7eb;
-
     --sidebar: 260px;
 }
 
@@ -42,15 +36,11 @@ body {
     min-height: 100vh;
 }
 
-/* =========================================================
-   2. FORM INPUTS & BUTTONS (MOBILE FRIENDLY)
-========================================================= */
 button,
 input,
 select {
     font-family: inherit;
     font-size: 16px !important;
-    /* Mencegah auto-zoom di browser HP (iOS/Android) */
 }
 
 button {
@@ -70,7 +60,6 @@ button {
     gap: 8px;
     transition: background 0.2s, transform 0.1s;
     min-height: 44px;
-    /* Standar kenyamanan sentuhan jari */
 }
 
 .btn:active {
@@ -107,9 +96,6 @@ button {
     color: var(--red);
 }
 
-/* =========================================================
-   3. LOGIN PAGE
-========================================================= */
 .login-container {
     min-height: 100vh;
     display: flex;
@@ -178,17 +164,39 @@ button {
     border-radius: 10px;
     outline: none;
     background: white;
-    transition: border-color 0.2s;
 }
 
-.form-group input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(123, 30, 43, 0.1);
+/* PASSWORD TOGGLE EYE */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
-/* =========================================================
-   4. NAVIGATION & SIDEBAR
-========================================================= */
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent !important;
+    border: none !important;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    user-select: none;
+    min-height: auto !important;
+}
+
 .sidebar {
     position: fixed;
     left: 0;
@@ -332,9 +340,6 @@ button {
     backdrop-filter: blur(2px);
 }
 
-/* =========================================================
-   5. LAYOUT & TOPBAR
-========================================================= */
 .main-content {
     min-height: 100vh;
 }
@@ -378,9 +383,6 @@ button {
     margin: auto;
 }
 
-/* =========================================================
-   6. CARDS & STATS
-========================================================= */
 .welcome-card {
     background: linear-gradient(135deg, var(--primary), #45111a);
     color: white;
@@ -495,9 +497,7 @@ button {
     margin-bottom: 4px;
 }
 
-/* =========================================================
-   7. SEARCH & FILTER TOOLBAR (DIPERLEBAR & TERTATA)
-========================================================= */
+/* SEARCH TOOLBAR LEBAR */
 .search-card {
     background: white;
     padding: 16px;
@@ -533,7 +533,6 @@ button {
     font-size: 15px !important;
     outline: none;
     background: #f8f9fa;
-    transition: all 0.2s ease;
 }
 
 .search-wrapper input:focus {
@@ -546,7 +545,8 @@ button {
     width: 100%;
 }
 
-.filter-wrapper select {
+.filter-wrapper select,
+#adminKdkmpSelect {
     width: 100%;
     padding: 12px 14px;
     border: 1px solid var(--border);
@@ -554,16 +554,8 @@ button {
     font-size: 14px !important;
     background: white;
     outline: none;
-    color: var(--text);
 }
 
-.filter-wrapper select:focus {
-    border-color: var(--primary);
-}
-
-/* =========================================================
-   8. OPNAME CARDS & ITEM INPUT
-========================================================= */
 .opname-header-card {
     background: white;
     padding: 16px;
@@ -613,7 +605,6 @@ button {
     border-radius: 14px;
     padding: 14px;
     margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .barang-code {
@@ -660,10 +651,6 @@ button {
     outline: none;
 }
 
-.input-box input:focus {
-    border-color: var(--primary);
-}
-
 .result-box {
     background: #f8f9fa;
     padding: 8px;
@@ -681,7 +668,6 @@ button {
     font-size: 13px;
 }
 
-/* Status Colors */
 .status-sesuai {
     color: var(--green);
 }
@@ -701,9 +687,6 @@ button {
     font-weight: bold;
 }
 
-/* =========================================================
-   9. TABLES & RESPONSIVE DESIGN
-========================================================= */
 .table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -735,7 +718,6 @@ th {
     font-size: 13px;
 }
 
-/* Toast & Modal Notifications */
 .toast {
     position: fixed;
     right: 16px;
@@ -786,9 +768,6 @@ th {
     flex: 1;
 }
 
-/* =========================================================
-   10. DESKTOP RESPONSIVE BREAKPOINTS (900px+)
-========================================================= */
 @media (min-width: 901px) {
     .main-content {
         margin-left: var(--sidebar);
