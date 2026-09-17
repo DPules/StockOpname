@@ -236,17 +236,21 @@
                     </div>
                 </div>
 
+                <!-- SEARCH CARD -->
                 <div class="search-card">
+                    <!-- Row 1: Search Input (Full Width) -->
                     <div class="search-wrapper">
                         <span class="search-icon">🔎</span>
-                        <input type="text" id="barangSearch" placeholder="Cari nama atau kode barang..."
-                            oninput="filterBarang()">
+                        <input type="text" id="barangSearch" placeholder="Cari nama atau kode barang..." oninput="filterBarang()">
                     </div>
-                    <select id="kategoriFilter" onchange="filterBarang()">
-                        <option value="">Semua Kategori</option>
-                    </select>
+                
+                    <!-- Row 2: Kategori Filter (Di bawah Search Bar) -->
+                    <div class="filter-wrapper">
+                        <select id="kategoriFilter" onchange="filterBarang()">
+                            <option value="">Semua Kategori</option>
+                        </select>
+                    </div>
                 </div>
-
                 <div id="barangContainer">
                     <div class="loading">Memuat data barang...</div>
                 </div>
