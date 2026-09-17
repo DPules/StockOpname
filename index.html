@@ -44,7 +44,7 @@
 
                 <div style="text-align: center; margin-top: 20px; font-size: 13px;">
                     <span style="color: var(--muted);">Belum punya akun?</span>
-                    <a target="_blank" href="register.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">
+                    <a href="register.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">
                         Daftar di sini</a>
                 </div>
             </div>
@@ -137,6 +137,37 @@
                     </div>
                 </div>
 
+                <!-- TABEL PERSETUJUAN USER PENDING (DIPINDAHKAN KE DASHBOARD) -->
+                <div id="pendingUserSection" class="section-card hidden"
+                    style="margin-bottom: 16px; border: 2px solid var(--orange);">
+                    <div class="section-header" style="background: #fffbeb;">
+                        <div>
+                            <h3 style="color: var(--orange); display: flex; align-items: center; gap: 8px;">
+                                <span>⏳</span> Persetujuan Registrasi User Baru
+                            </h3>
+                            <p>Daftar akun baru yang membutuhkan verifikasi Admin sebelum dapat login</p>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Nama Lengkap</th>
+                                    <th>Role</th>
+                                    <th>KDKMP ID</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingUserTableBody">
+                                <tr>
+                                    <td colspan="5" class="empty-state">Memuat data verifikasi...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- WIDGET PERINGATAN STOK MENIPIS / HABIS -->
                 <div id="lowStockAlertSection" class="section-card hidden"
                     style="border: 2px solid var(--red); margin-bottom: 16px;">
@@ -149,7 +180,6 @@
                         </div>
 
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                            <!-- DROPDOWN KHUSUS ADMIN UNTUK FILTER STOK MENIPIS PER KDKMP -->
                             <div id="adminLowStockFilterWrapper" class="hidden" style="min-width: 180px;">
                                 <select id="adminLowStockSelect" onchange="filterLowStockByAdmin(this.value)"
                                     style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
@@ -218,7 +248,7 @@
 
                 <div class="progress-card">
                     <div class="progress-top">
-                        <div><strong>Progress Terisi </strong><span id="progressText">0 / 0 item</span></div>
+                        <div><strong>Progress Terisi</strong><span id="progressText">0 / 0 item</span></div>
                         <strong id="progressPercent">0%</strong>
                     </div>
                     <div class="progress-bar">
@@ -278,34 +308,6 @@
 
             <!-- MASTER BARANG SECTION -->
             <section id="masterPage" class="content-page hidden">
-                <div id="pendingUserSection" class="section-card hidden"
-                    style="margin-bottom: 20px; border: 2px solid var(--orange);">
-                    <div class="section-header" style="background: #fffbeb;">
-                        <div>
-                            <h3 style="color: var(--orange);">⏳ Persetujuan Registrasi User</h3>
-                            <p>Daftar pendaftaran akun baru yang membutuhkan verifikasi Admin</p>
-                        </div>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Nama Lengkap</th>
-                                    <th>Role</th>
-                                    <th>KDKMP ID</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pendingUserTableBody">
-                                <tr>
-                                    <td colspan="5" class="empty-state">Memuat data verifikasi...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
                 <div class="section-card">
                     <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
                         <div>

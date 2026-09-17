@@ -120,9 +120,11 @@ function renderDashboardInfo() {
 
     if (isAdmin) {
         if (adminFilterWrapper) adminFilterWrapper.classList.remove("hidden");
+        loadPendingUsers(); // <--- BACA TABEL AKUN PENDING DI DASHBOARD ADMIN
         loadAdminLowStockData();
     } else {
         if (adminFilterWrapper) adminFilterWrapper.classList.add("hidden");
+        document.getElementById("pendingUserSection").classList.add("hidden");
         document.querySelectorAll(".col-kdkmp-admin").forEach(el => el.classList.add("hidden"));
         checkAndRenderLowStockLocal();
     }
@@ -351,11 +353,9 @@ function loadMasterPageData() {
     
     if (isAdmin) {
         if (filterWrapper) filterWrapper.classList.remove("hidden");
-        loadPendingUsers();
         loadAdminMasterKdkmpOptions();
     } else {
         if (filterWrapper) filterWrapper.classList.add("hidden");
-        document.getElementById("pendingUserSection").classList.add("hidden");
         fetchMasterData(currentUser.kdkmpId);
     }
 }
@@ -581,6 +581,7 @@ function showPage(pageId, btnEl) {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (pageId === "dashboardPage") renderDashboardInfo();
     if (pageId === "historyPage") loadHistory();
     if (pageId === "masterPage") loadMasterPageData();
     if (window.innerWidth <= 900) toggleSidebar(false);
