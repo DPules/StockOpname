@@ -1,5 +1,5 @@
 // =========================================================
-// Ganti variabel ini dengan URL Deployment Apps Script Anda
+// URL Deployment Apps Script (URL Web App Publik)
 // =========================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbxF4OWQxWw-AO1Tq1Zq80eG75Oi5emHDYDjr_8QVoOHkvx365ew3XMhnBjlxf9yFbBdoQ/exec";
 
@@ -8,7 +8,11 @@ let currentKdkmp = null;
 let barangList = [];
 let opnameData = {};
 
+/* =========================
+   INITIALIZATION & LISTENERS
+========================= */
 document.addEventListener("DOMContentLoaded", function () {
+    // Sesi Login dari Storage
     const savedUser = sessionStorage.getItem("kdkmpUser");
     if (savedUser) {
         try {
@@ -19,9 +23,29 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Listener Form Login
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
         loginForm.addEventListener("submit", login);
+    }
+
+    // Listener Toolbar Pencarian & Filter Kategori
+    const searchInput = document.getElementById("barangSearch");
+    const categorySelect = document.getElementById("kategoriFilter");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterBarang);
+        searchInput.addEventListener("keyup", filterBarang);
+    }
+    if (categorySelect) {
+        categorySelect.addEventListener("change", filterBarang);
+    }
+});
+
+// Otomatis sorot seluruh teks saat kolom input angka di-tap pada HP
+document.addEventListener("focusin", function (e) {
+    if (e.target && e.target.tagName === "INPUT" && e.target.type === "number") {
+        e.target.select();
     }
 });
 
@@ -61,7 +85,7 @@ function login(e) {
     })
     .catch(err => {
         console.error("Login Error:", err);
-        showLoginMessage("Gagal terhubung ke server.");
+        showLoginMessage("Gagal terhubung ke server. Periksa koneksi internet.");
     });
 }
 
@@ -94,7 +118,7 @@ function loadInitialData() {
             currentKdkmp = data.kdkmp;
             barangList = data.barang;
             renderDashboardInfo();
-            loadDraft(); // Muat draft terisolasi per KDKMP jika ada
+            loadDraft(); // Muat draft terisolasi khusus KDKMP ini
             renderBarangInput();
             renderKategoriFilter();
             renderMasterTable();
@@ -138,9 +162,13 @@ function renderBarangInput() {
     let html = "";
     barangList.forEach(item => {
         const saved = opnameData[item.kode] || { ctn: "", pcs: "", total: 0 };
+        const searchText = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
 
         html += `
-        <div class="barang-card" id="card-${item.kode}" data-category="${item.kategori}" data-search="${item.kode.toLowerCase()} ${item.nama.toLowerCase()}">
+        <div class="barang-card" 
+             id="card-${item.kode}" 
+             data-search="${searchText}" 
+             data-category="${item.kategori || ''}">
             <div class="barang-top">
                 <div class="barang-info">
                     <div class="barang-code">${item.kode}</div>
@@ -199,7 +227,34 @@ function renderMasterTable() {
 }
 
 /* =========================
-   CALCULATIONS & DRAFT ISOLATION
+   PENCARIAN & FILTER
+========================= */
+function filterBarang() {
+    const searchInput = document.getElementById("barangSearch");
+    const categorySelect = document.getElementById("kategoriFilter");
+
+    const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const categoryValue = categorySelect ? categorySelect.value : "";
+
+    const cards = document.querySelectorAll("#barangContainer .barang-card");
+
+    cards.forEach(card => {
+        const itemDataSearch = card.getAttribute("data-search") || "";
+        const itemCategory = card.getAttribute("data-category") || "";
+
+        const matchSearch = itemDataSearch.includes(searchValue);
+        const matchCategory = !categoryValue || itemCategory === categoryValue;
+
+        if (matchSearch && matchCategory) {
+            card.classList.remove("hidden");
+        } else {
+            card.classList.add("hidden");
+        }
+    });
+}
+
+/* =========================
+   PERHITUNGAN & DRAFT ISOLATED
 ========================= */
 function calculateItem(kode, isiCtn, stokSystem) {
     const card = document.getElementById(`card-${kode}`);
@@ -264,25 +319,8 @@ function clearDraft() {
     localStorage.removeItem(draftKey);
 }
 
-function filterBarang() {
-    const search = document.getElementById("barangSearch").value.toLowerCase();
-    const category = document.getElementById("kategoriFilter").value;
-    const cards = document.querySelectorAll(".barang-card");
-
-    cards.forEach(card => {
-        const matchSearch = card.getAttribute("data-search").includes(search);
-        const matchCategory = !category || card.getAttribute("data-category") === category;
-
-        if (matchSearch && matchCategory) {
-            card.classList.remove("hidden");
-        } else {
-            card.classList.add("hidden");
-        }
-    });
-}
-
 /* =========================
-   SUBMIT OPNAME (POST)
+   SUBMIT OPNAME
 ========================= */
 function submitOpname() {
     const items = Object.values(opnameData);
@@ -307,7 +345,7 @@ function submitOpname() {
             if (res.success) {
                 showToast(res.message);
                 opnameData = {};
-                clearDraft(); // Hapus draft lokal KDKMP ini
+                clearDraft();
                 showPage("dashboardPage");
             } else {
                 showToast("Gagal: " + res.message);
@@ -350,78 +388,12 @@ function loadHistory() {
 }
 
 /* =========================
-   UI & NAVIGATION HELPERS
+   NAVIGASI & UI HELPERS
 ========================= */
 function startNewOpname() {
     showPage("opnamePage");
 }
 
-function showPage(pageId, btnEl) {
-    document.querySelectorAll(".content-page").forEach(p => p.classList.add("hidden"));
-    document.getElementById(pageId).classList.remove("hidden");
-
-    if (btnEl) {
-        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active"));
-        btnEl.classList.add("active");
-    }
-
-    if (pageId === "historyPage") loadHistory();
-
-    if (window.innerWidth <= 900) toggleSidebar(false);
-}
-
-function toggleSidebar(forceState) {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebarOverlay");
-    if (forceState !== undefined) {
-        sidebar.classList.toggle("open", forceState);
-        overlay.classList.toggle("hidden", !forceState);
-    } else {
-        sidebar.classList.toggle("open");
-        overlay.classList.toggle("hidden");
-    }
-}
-
-function showLoginMessage(msg, isError = true) {
-    const el = document.getElementById("loginMessage");
-    el.textContent = msg;
-    el.style.color = isError ? "var(--red)" : "var(--blue)";
-}
-
-function showToast(msg) {
-    const toast = document.getElementById("toast");
-    document.getElementById("toastMessage").textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
-}
-
-function showConfirmModal(title, msg, onConfirm) {
-    document.getElementById("modalTitle").textContent = title;
-    document.getElementById("modalMessage").textContent = msg;
-    document.getElementById("confirmModal").classList.remove("hidden");
-
-    document.getElementById("modalConfirmButton").onclick = function () {
-        closeModal();
-        onConfirm();
-    };
-}
-
-function closeModal() {
-    document.getElementById("confirmModal").classList.add("hidden");
-}
-
-/* =========================
-   MOBILE INTERACTION IMPROVEMENTS
-========================= */
-
-// Otomatis sorot seluruh teks saat kolom input di-tap di HP
-document.addEventListener("focusin", function (e) {
-    if (e.target && e.target.tagName === "INPUT" && e.target.type === "number") {
-        e.target.select();
-    }
-});
-
-// Penyesuaian fungsi showPage agar sidebar otomatis tertutup di HP
 function showPage(pageId, btnEl) {
     document.querySelectorAll(".content-page").forEach(p => p.classList.add("hidden"));
     
@@ -433,22 +405,19 @@ function showPage(pageId, btnEl) {
         btnEl.classList.add("active");
     }
 
-    // Scroll otomatis ke paling atas saat pindah halaman
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (pageId === "historyPage") loadHistory();
 
-    // Sembunyikan sidebar otomatis jika di layar layar HP/Tablet
     if (window.innerWidth <= 900) {
         toggleSidebar(false);
     }
 }
 
-// Toggle Sidebar untuk HP
 function toggleSidebar(forceState) {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
-    
+
     if (!sidebar || !overlay) return;
 
     if (forceState !== undefined) {
@@ -463,4 +432,45 @@ function toggleSidebar(forceState) {
         const isOpen = sidebar.classList.toggle("open");
         overlay.classList.toggle("hidden", !isOpen);
     }
+}
+
+function showLoginMessage(msg, isError = true) {
+    const el = document.getElementById("loginMessage");
+    if (el) {
+        el.textContent = msg;
+        el.style.color = isError ? "var(--red)" : "var(--blue)";
+    }
+}
+
+function showToast(msg) {
+    const toast = document.getElementById("toast");
+    const toastMsg = document.getElementById("toastMessage");
+    if (toast && toastMsg) {
+        toastMsg.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+}
+
+function showConfirmModal(title, msg, onConfirm) {
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMsg = document.getElementById("modalMessage");
+    const modal = document.getElementById("confirmModal");
+    const confirmBtn = document.getElementById("modalConfirmButton");
+
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalMsg) modalMsg.textContent = msg;
+    if (modal) modal.classList.remove("hidden");
+
+    if (confirmBtn) {
+        confirmBtn.onclick = function () {
+            closeModal();
+            onConfirm();
+        };
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById("confirmModal");
+    if (modal) modal.classList.add("hidden");
 }
