@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Opname KDKMP</title>
+
+    <!-- Memanggil file Style.html untuk Apps Script -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================
+       LOGIN PAGE
+  ========================== -->
+    <div id="loginPage" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="logo-box">
+                    <div class="logo-icon">K</div>
+                </div>
+                <h1>Stock Opname</h1>
+                <p class="subtitle">KDKMP Area Bandung</p>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" placeholder="Masukkan username" required
+                            autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Masukkan password" required
+                            autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">LOGIN</button>
+                </form>
+
+                <div id="loginMessage" class="message"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================
+       MAIN APPLICATION PAGE
+  ========================== -->
+    <div id="appPage" class="page hidden">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">K</div>
+                    <div>
+                        <strong>KDKMP</strong>
+                        <span>Stock Opname</span>
+                    </div>
+                </div>
+                <button class="sidebar-close" onclick="toggleSidebar()">×</button>
+            </div>
+
+            <nav class="menu">
+                <button class="menu-item active" onclick="showPage('dashboardPage', this)">
+                    <span>📊</span> Dashboard
+                </button>
+                <button class="menu-item" onclick="showPage('opnamePage', this)">
+                    <span>📦</span> Stock Opname
+                </button>
+                <button class="menu-item" onclick="showPage('historyPage', this)">
+                    <span>📋</span> Riwayat
+                </button>
+                <button class="menu-item admin-menu" onclick="showPage('masterPage', this)">
+                    <span>🗂️</span> Master Barang
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">P</div>
+                    <div class="user-detail">
+                        <strong id="sidebarUserName">PIC</strong>
+                        <span id="sidebarUserRole">Petugas</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Keluar</button>
+            </div>
+        </aside>
+
+        <!-- OVERLAY MOBILE -->
+        <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+
+        <!-- CONTENT -->
+        <main class="main-content">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <button class="hamburger" onclick="toggleSidebar()">☰</button>
+                <div class="topbar-title">
+                    <h2 id="pageTitle">Dashboard</h2>
+                    <span id="currentKdkmp">-</span>
+                </div>
+                <div class="topbar-user">
+                    <span id="topbarUser">PIC</span>
+                </div>
+            </header>
+
+
+            <!-- DASHBOARD SECTION -->
+            <section id="dashboardPage" class="content-page">
+                <div class="welcome-card">
+                    <div>
+                        <span class="small-label">STOCK OPNAME KDKMP</span>
+                        <h1>Selamat datang, <span id="welcomeName">PIC</span></h1>
+                        <p>Pantau dan lakukan stock opname dengan cepat, mudah, dan terkontrol.</p>
+                    </div>
+                    <button class="btn btn-light" onclick="startNewOpname()">+ Mulai Opname</button>
+                </div>
+
+                <!-- STATISTICS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">📦</div>
+                        <div>
+                            <span>Total Item</span>
+                            <strong id="statBarang">0</strong>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">✓</div>
+                        <div>
+                            <span>Opname Selesai</span>
+                            <strong id="statSelesai">0</strong>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">⏳</div>
+                        <div>
+                            <span>Proses Opname</span>
+                            <strong id="statVerifikasi">0</strong>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">!</div>
+                        <div>
+                            <span>Selisih Stok</span>
+                            <strong id="statSelisih">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KDKMP INFO -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3>Informasi KDKMP</h3>
+                            <p>Data lokasi dan Penanggung Jawab (PIC)</p>
+                        </div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span>ID KDKMP</span>
+                            <strong id="infoIdKdkmp">-</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>Nama KDKMP</span>
+                            <strong id="infoNamaKdkmp">-</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>Desa/Kelurahan</span>
+                            <strong id="infoDesa">-</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>Kecamatan</span>
+                            <strong id="infoKecamatan">-</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>Kabupaten/Kota</span>
+                            <strong id="infoKabupaten">-</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>PIC</span>
+                            <strong id="infoPic">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LAST OPNAME -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3>Opname Terakhir</h3>
+                            <p>Aktivitas penghitungan stok terbaru</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="showPage('historyPage')">Lihat Semua</button>
+                    </div>
+                    <div id="lastOpnameContainer">
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Belum ada aktivitas opname tercatat.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- OPNAME SECTION -->
+            <section id="opnamePage" class="content-page hidden">
+                <div class="opname-header-card">
+                    <div>
+                        <span class="small-label">FORM INPUT</span>
+                        <h1>Penghitungan Stok Fisik</h1>
+                        <p>Masukkan jumlah stok fisik dalam CTN dan PCS.</p>
+                    </div>
+                    <div class="opname-actions">
+                        <button class="btn btn-secondary" onclick="saveDraft()">Simpan Draft</button>
+                        <button class="btn btn-primary" onclick="submitOpname()">Submit Opname</button>
+                    </div>
+                </div>
+
+                <div class="progress-card">
+                    <div class="progress-top">
+                        <div>
+                            <strong>Progress Terisi</strong>
+                            <span id="progressText">0 / 0 item</span>
+                        </div>
+                        <strong id="progressPercent">0%</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressBar" class="progress-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div class="search-card">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔎</span>
+                        <input type="text" id="barangSearch" placeholder="Cari nama atau kode barang..."
+                            oninput="filterBarang()">
+                    </div>
+                    <select id="kategoriFilter" onchange="filterBarang()">
+                        <option value="">Semua Kategori</option>
+                    </select>
+                </div>
+
+                <div id="barangContainer">
+                    <div class="loading">Memuat data barang...</div>
+                </div>
+            </section>
+
+
+            <!-- HISTORY SECTION -->
+            <section id="historyPage" class="content-page hidden">
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3>Riwayat Stock Opname</h3>
+                            <p>Catatan seluruh kegiatan opname KDKMP</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="loadHistory()">↻ Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Opname</th>
+                                    <th>Tanggal</th>
+                                    <th>KDKMP</th>
+                                    <th>Petugas</th>
+                                    <th>Total Item</th>
+                                    <th>Total Selisih</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <tr>
+                                    <td colspan="7" class="loading">Memuat data riwayat...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- MASTER BARANG SECTION -->
+            <section id="masterPage" class="content-page hidden">
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3>Master Katalog Barang</h3>
+                            <p>Daftar lengkap barang dan stok sistem KDKMP</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadBarang()">↻ Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kode Barang</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Isi / CTN</th>
+                                    <th>Satuan</th>
+                                    <th>Stok Sistem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterTable">
+                                <tr>
+                                    <td colspan="6" class="loading">Memuat data katalog...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+
+    <!-- CONFIRMATION MODAL -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-box">
+            <div class="modal-icon">?</div>
+            <h3 id="modalTitle">Konfirmasi</h3>
+            <p id="modalMessage">Apakah Anda yakin ingin melanjutkan?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" id="modalConfirmButton">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memanggil file JavaScript.html untuk Apps Script -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
