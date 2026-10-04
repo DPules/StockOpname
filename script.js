@@ -100,6 +100,7 @@ function loadInitialData() {
             loadDraft();
             renderBarangInput();
             renderKategoriFilter();
+            populateBarangKeluarDropdown();
         }
     });
 }
@@ -120,7 +121,7 @@ function renderDashboardInfo() {
 
     if (isAdmin) {
         if (adminFilterWrapper) adminFilterWrapper.classList.remove("hidden");
-        loadPendingUsers(); // <--- BACA TABEL AKUN PENDING DI DASHBOARD ADMIN
+        loadPendingUsers();
         loadAdminLowStockData();
     } else {
         if (adminFilterWrapper) adminFilterWrapper.classList.add("hidden");
@@ -129,6 +130,149 @@ function renderDashboardInfo() {
         checkAndRenderLowStockLocal();
     }
 }
+
+/* =========================================================
+   FITUR BARANG KELUAR HARIAN (LENGKAP DENGAN SEARCH)
+========================================================= */
+
+function populateBarangKeluarDropdown(filterKeyword = "") {
+    const select = document.getElementById("keluarSelectBarang");
+    if (!select) return;
+
+    const query = filterKeyword.toLowerCase().trim();
+    let optionsHtml = '<option value="">-- Pilih Barang --</option>';
+
+    const filteredItems = barangList.filter(item => {
+        const text = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    filteredItems.forEach(item => {
+        optionsHtml += `<option value="${item.kode}">${item.kode} - ${item.nama} (Stok: ${item.stokSystem} ${item.satuan})</option>`;
+    });
+
+    select.innerHTML = optionsHtml;
+    
+    // Auto select item pertama jika hanya ada 1 hasil pencarian
+    if (filteredItems.length === 1 && query !== "") {
+        select.value = filteredItems[0].kode;
+    }
+    
+    updateKeluarStokInfo();
+}
+
+function filterKeluarBarangOptions() {
+    const keyword = document.getElementById("keluarSearchInput").value;
+    populateBarangKeluarDropdown(keyword);
+}
+
+function updateKeluarStokInfo() {
+    const kode = document.getElementById("keluarSelectBarang").value;
+    const target = barangList.find(b => b.kode === kode);
+    const label = document.getElementById("keluarStokCurrent");
+
+    if (target) {
+        label.textContent = `${target.stokSystem} ${target.satuan}`;
+    } else {
+        label.textContent = "0 PCS";
+    }
+}
+
+function handleBarangKeluarSubmit(e) {
+    e.preventDefault();
+
+    const kodeBarang = document.getElementById("keluarSelectBarang").value;
+    const jumlah = parseInt(document.getElementById("keluarJumlah").value) || 0;
+    const keterangan = document.getElementById("keluarKeterangan").value.trim();
+
+    if (!kodeBarang) {
+        showToast("Harap pilih barang terlebih dahulu.");
+        return;
+    }
+
+    const item = barangList.find(b => b.kode === kodeBarang);
+    if (!item) return;
+
+    if (jumlah <= 0) {
+        showToast("Jumlah barang keluar harus lebih dari 0.");
+        return;
+    }
+
+    if (jumlah > item.stokSystem) {
+        showToast(`Stok tidak mencukupi! Stok tersedia: ${item.stokSystem}`);
+        return;
+    }
+
+    showConfirmModal("Konfirmasi Barang Keluar", `Kurangi stok ${item.nama} sebanyak ${jumlah} ${item.satuan}?`, function () {
+        showToast("Memproses barang keluar...");
+
+        const payload = {
+            action: "submitBarangKeluar",
+            kdkmpId: currentUser.kdkmpId,
+            kodeBarang: kodeBarang,
+            jumlah: jumlah,
+            keterangan: keterangan,
+            petugas: currentUser.name
+        };
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                showToast(res.message);
+                document.getElementById("formBarangKeluar").reset();
+                
+                // Refresh data
+                loadInitialData();
+                loadBarangKeluarHistory();
+            } else {
+                showToast("Gagal: " + res.message);
+            }
+        })
+        .catch(err => {
+            console.error("Error barang keluar:", err);
+            showToast("Gagal terhubung ke server.");
+        });
+    });
+}
+
+function loadBarangKeluarHistory() {
+    const tbody = document.getElementById("barangKeluarTableBody");
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Memuat data...</td></tr>';
+
+    fetch(`${API_URL}?action=getBarangKeluarHistory&kdkmpId=${currentUser.kdkmpId}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.history.length > 0) {
+            let html = "";
+            data.history.forEach(row => {
+                const date = new Date(row.tanggal).toLocaleDateString("id-ID");
+                html += `
+                <tr>
+                    <td><strong>${row.id}</strong></td>
+                    <td>${date}</td>
+                    <td>${row.kode}</td>
+                    <td>${row.nama}</td>
+                    <td><strong style="color: var(--red);">-${row.jumlah}</strong></td>
+                    <td>${row.stokAwal}</td>
+                    <td><strong style="color: var(--green);">${row.stokAkhir}</strong></td>
+                    <td>${row.petugas}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Belum ada riwayat barang keluar.</td></tr>';
+        }
+    });
+}
+
+/* =========================================================
+   ADMIN & OTHER FUNCTIONS
+========================================================= */
 
 function checkAndRenderLowStockLocal() {
     const alertSection = document.getElementById("lowStockAlertSection");
@@ -582,6 +726,10 @@ function showPage(pageId, btnEl) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (pageId === "dashboardPage") renderDashboardInfo();
+    if (pageId === "barangKeluarPage") {
+        populateBarangKeluarDropdown();
+        loadBarangKeluarHistory();
+    }
     if (pageId === "historyPage") loadHistory();
     if (pageId === "masterPage") loadMasterPageData();
     if (window.innerWidth <= 900) toggleSidebar(false);

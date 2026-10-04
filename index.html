@@ -71,6 +71,8 @@
             <nav class="menu">
                 <button class="menu-item active" onclick="showPage('dashboardPage', this)"><span>📊</span>
                     Dashboard</button>
+                <button class="menu-item" onclick="showPage('barangKeluarPage', this)"><span>📤</span> Barang
+                    Keluar</button>
                 <button class="menu-item" onclick="showPage('opnamePage', this)"><span>📦</span> Stock Opname</button>
                 <button class="menu-item" onclick="showPage('historyPage', this)"><span>📋</span> Riwayat
                     Opname</button>
@@ -137,7 +139,7 @@
                     </div>
                 </div>
 
-                <!-- TABEL PERSETUJUAN USER PENDING (DIPINDAHKAN KE DASHBOARD) -->
+                <!-- TABEL PERSETUJUAN USER PENDING -->
                 <div id="pendingUserSection" class="section-card hidden"
                     style="margin-bottom: 16px; border: 2px solid var(--orange);">
                     <div class="section-header" style="background: #fffbeb;">
@@ -228,6 +230,99 @@
                         <div class="info-item"><span>Kecamatan</span><strong id="infoKecamatan">-</strong></div>
                         <div class="info-item"><span>Kabupaten/Kota</span><strong id="infoKabupaten">-</strong></div>
                         <div class="info-item"><span>PIC</span><strong id="infoPic">-</strong></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HALAMAN BARANG KELUAR HARIAN -->
+            <section id="barangKeluarPage" class="content-page hidden">
+                <div class="section-card" style="margin-bottom: 20px;">
+                    <div class="section-header">
+                        <div>
+                            <h3>Catat Barang Keluar Harian</h3>
+                            <p>Stok sistem akan otomatis berkurang setelah dicatat</p>
+                        </div>
+                    </div>
+                    <div style="padding: 16px;">
+                        <form id="formBarangKeluar" onsubmit="handleBarangKeluarSubmit(event)">
+
+                            <!-- INPUT PENCARIAN BARANG KELUAR -->
+                            <div class="form-group">
+                                <label>Cari / Filter Nama Barang</label>
+                                <div class="search-wrapper" style="margin-bottom: 8px;">
+                                    <span class="search-icon">🔎</span>
+                                    <input type="text" id="keluarSearchInput"
+                                        placeholder="Ketik nama atau kode barang..."
+                                        oninput="filterKeluarBarangOptions()"
+                                        style="width: 100%; padding: 12px 12px 12px 42px; border: 1px solid var(--border); border-radius: 10px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Pilih Barang Terfilter</label>
+                                <select id="keluarSelectBarang" required onchange="updateKeluarStokInfo()"
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                    <option value="">-- Pilih Barang --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group"
+                                style="display: flex; gap: 12px; align-items: center; background: #f8f9fa; padding: 12px; border-radius: 10px; margin-bottom: 16px;">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--muted); display: block;">Stok Sistem Saat
+                                        Ini</span>
+                                    <strong id="keluarStokCurrent" style="font-size: 18px; color: var(--primary);">0
+                                        PCS</strong>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Jumlah Keluar (PCS)</label>
+                                <input type="number" id="keluarJumlah" min="1"
+                                    placeholder="Masukkan jumlah barang keluar" required
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Keterangan / Keperluan</label>
+                                <input type="text" id="keluarKeterangan"
+                                    placeholder="Contoh: Penjualan harian / rusak / expired"
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full">Submit & Update Stok</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3>Riwayat Transaksi Barang Keluar</h3>
+                            <p>Catatan pengurangan stok harian</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="loadBarangKeluarHistory()">↻ Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Transaksi</th>
+                                    <th>Tanggal</th>
+                                    <th>Kode</th>
+                                    <th>Nama Barang</th>
+                                    <th>Jumlah Keluar</th>
+                                    <th>Stok Awal</th>
+                                    <th>Sisa Stok</th>
+                                    <th>Petugas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="barangKeluarTableBody">
+                                <tr>
+                                    <td colspan="8" class="empty-state">Memuat data transaksi...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
