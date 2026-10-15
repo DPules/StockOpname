@@ -73,6 +73,8 @@
                     Dashboard</button>
                 <button class="menu-item" onclick="showPage('barangKeluarPage', this)"><span>📤</span> Barang
                     Keluar</button>
+                <button class="menu-item" onclick="showPage('tambahBarangPage', this)"><span>➕</span> Tambah
+                    Barang</button>
                 <button class="menu-item" onclick="showPage('opnamePage', this)"><span>📦</span> Stock Opname</button>
                 <button class="menu-item" onclick="showPage('historyPage', this)"><span>📋</span> Riwayat
                     Opname</button>
@@ -154,7 +156,7 @@
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;"
                                 onclick="exportKertasStrukCSV()">
-                                📥 Download CSV
+                                📥 Download Excel
                             </button>
                             <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;"
                                 onclick="showPage('barangKeluarPage')">
@@ -214,7 +216,7 @@
                     </div>
                 </div>
 
-                <!-- WIDGET PERINGATAN STOK MENIPIS / HABIS (BARANG UMUM) -->
+                <!-- WIDGET PERINGATAN STOK MENIPIS / HABIS -->
                 <div id="lowStockAlertSection" class="section-card hidden"
                     style="border: 2px solid var(--red); margin-bottom: 16px;">
                     <div class="section-header" style="background: #fef2f2; flex-wrap: wrap; gap: 12px;">
@@ -233,11 +235,10 @@
                                 </select>
                             </div>
 
-                            <!-- TOMBOL DOWNLOAD DATAT STOK MENIPIS/HABIS -->
                             <button class="btn btn-primary"
                                 style="background: #27ae60; border-color: #27ae60; font-size: 13px !important; padding: 6px 12px;"
                                 onclick="exportLowStockCSV()">
-                                📥 Download Excel/CSV
+                                📥 Download Excel
                             </button>
 
                             <button class="btn btn-secondary" style="color: var(--red);"
@@ -372,6 +373,69 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HALAMAN TAMBAH BARANG BARU -->
+            <section id="tambahBarangPage" class="content-page hidden">
+                <div class="section-card" style="max-width: 600px; margin: 0 auto 20px auto;">
+                    <div class="section-header">
+                        <div>
+                            <h3>Tambah Barang Baru</h3>
+                            <p>Daftarkan produk baru yang belum tercatat di katalog KDKMP</p>
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <form id="formTambahBarang" onsubmit="handleTambahBarangSubmit(event)">
+                            <div class="form-group">
+                                <label>Kode Barang <span style="color:var(--red);">* (Otomatis)</span></label>
+                                <input type="text" id="addKodeBarang" placeholder="Memuat kode otomatis..." required
+                                    readonly
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8f9fa; font-weight: bold; color: var(--primary);">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nama Barang <span style="color:var(--red);">*</span></label>
+                                <input type="text" id="addNamaBarang" placeholder="Masukkan nama barang lengkap"
+                                    required
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Kategori <span style="color:var(--red);">*</span></label>
+                                <input type="text" id="addKategori"
+                                    placeholder="Contoh: Sembako, Susu, Kertas Struk, Umum" required
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                            </div>
+
+                            <div class="form-group" style="display: flex; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <label>Isi Per CTN</label>
+                                    <input type="number" id="addIsiCtn" min="1" value="1" placeholder="1"
+                                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label>Satuan <span style="color:var(--red);">*</span></label>
+                                    <input type="text" id="addSatuan" placeholder="PCS / ROLL / PACK" value="PCS"
+                                        required
+                                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Stok Awal Sistem (Opsional)</label>
+                                <input type="number" id="addStokAwal" min="0"
+                                    placeholder="Kosongkan jika belum ada stok"
+                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <small
+                                    style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">Jika
+                                    dikosongkan, status tidak akan dihitung sebagai stok 0 (habis).</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full" style="margin-top: 10px;">+ Simpan
+                                Barang Baru</button>
+                        </form>
                     </div>
                 </div>
             </section>

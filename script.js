@@ -12,7 +12,6 @@ let allLowStockListAdmin = [];
    HELPER PENTING: VALIDASI ANGKA STOK REAL
 ========================================================= */
 
-// Memastikan stok benar-benar terisi angka valid (bukan string kosong "", null, atau undefined)
 function isValidStokNumber(val) {
     if (val === "" || val === null || val === undefined) return false;
     const num = Number(val);
@@ -135,7 +134,6 @@ function renderDashboardInfo() {
     document.getElementById("infoPic").textContent = currentKdkmp.pic;
     document.getElementById("statBarang").textContent = barangList.length;
 
-    // Cek Khusus Peringatan Kertas Struk
     checkKertasStrukAlert();
 
     const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
@@ -154,7 +152,7 @@ function renderDashboardInfo() {
 }
 
 /* =========================================================
-   PERINGATAN KERTAS STRUK HABIS (HANYA DENGAN ANGKAS 0 REALL)
+   PERINGATAN KERTAS STRUK HABIS
 ========================================================= */
 
 function checkKertasStrukAlert() {
@@ -166,7 +164,6 @@ function checkKertasStrukAlert() {
         const cat = item.kategori ? item.kategori.toLowerCase() : "";
         const isKertas = cat.includes("kertas") || cat.includes("struk") || name.includes("kertas") || name.includes("thermal") || name.includes("struk");
         
-        // Cek apakah stok terisi angka valid DAN bernilai 0
         const valid = isValidStokNumber(item.stokSystem);
         return isKertas && valid && Number(item.stokSystem) === 0;
     });
@@ -193,7 +190,7 @@ function checkKertasStrukAlert() {
 }
 
 /* =========================================================
-   PERINGATAN STOK MENIPIS / HABIS (MENGABAIKAN KOSONG/NULL)
+   PERINGATAN STOK MENIPIS / HABIS
 ========================================================= */
 
 function checkAndRenderLowStockLocal() {
@@ -202,7 +199,7 @@ function checkAndRenderLowStockLocal() {
     const statMenipisEl = document.getElementById("statMenipis");
 
     const lowStockItems = barangList.filter(item => {
-        if (!isValidStokNumber(item.stokSystem)) return false; // Abaikan jika tidak diisi / kosong
+        if (!isValidStokNumber(item.stokSystem)) return false;
         const stokNum = Number(item.stokSystem);
         return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
     });
@@ -273,7 +270,7 @@ function renderAdminLowStockTable(list, isAllView = true) {
     const colKdkmp = document.querySelectorAll(".col-kdkmp-admin");
 
     const validList = list.filter(item => {
-        if (!isValidStokNumber(item.stokSystem)) return false; // Abaikan yang tidak diisi
+        if (!isValidStokNumber(item.stokSystem)) return false;
         const stokNum = Number(item.stokSystem);
         return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
     });
@@ -456,6 +453,86 @@ function loadBarangKeluarHistory() {
 }
 
 /* =========================================================
+   TAMBAH BARANG BARU & KODE OTOMATIS
+========================================================= */
+
+function loadNextKodeBarang() {
+    const inputKode = document.getElementById("addKodeBarang");
+    if (!inputKode || !currentUser) return;
+
+    inputKode.value = "Memuat...";
+    inputKode.readOnly = true;
+
+    fetch(`${API_URL}?action=getNextKodeBarang&kdkmpId=${currentUser.kdkmpId}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.nextKode) {
+            inputKode.value = data.nextKode;
+        } else {
+            inputKode.value = "BRG-001";
+        }
+        inputKode.readOnly = false;
+    })
+    .catch(err => {
+        console.error("Error get next kode:", err);
+        inputKode.value = "";
+        inputKode.readOnly = false;
+    });
+}
+
+function handleTambahBarangSubmit(e) {
+    e.preventDefault();
+
+    const kode = document.getElementById("addKodeBarang").value.trim();
+    const nama = document.getElementById("addNamaBarang").value.trim();
+    const kategori = document.getElementById("addKategori").value.trim();
+    const isiCtn = document.getElementById("addIsiCtn").value || 1;
+    const satuan = document.getElementById("addSatuan").value.trim();
+    const stokAwal = document.getElementById("addStokAwal").value.trim();
+
+    if (!kode || !nama || !kategori || !satuan) {
+        showToast("Harap isi semua kolom wajib (*)!");
+        return;
+    }
+
+    showConfirmModal("Tambah Barang", `Tambahkan barang "${nama}" (${kode}) ke katalog?`, function () {
+        showToast("Menyimpan barang baru...");
+
+        const payload = {
+            action: "addNewBarang",
+            kdkmpId: currentUser.kdkmpId,
+            kode: kode,
+            nama: nama,
+            kategori: kategori,
+            isiCtn: isiCtn,
+            satuan: satuan,
+            stokInitial: stokAwal
+        };
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                showToast(res.message);
+                document.getElementById("formTambahBarang").reset();
+                loadInitialData();
+                loadNextKodeBarang();
+            } else {
+                showToast("Gagal: " + res.message);
+            }
+        })
+        .catch(err => {
+            console.error("Error tambah barang:", err);
+            showToast("Gagal terhubung ke server.");
+        });
+    });
+}
+
+/* =========================================================
    PERSETUJUAN AKUN USER PENDING
 ========================================================= */
 
@@ -505,6 +582,101 @@ function verifyUser(username, status) {
             showToast("Gagal: " + res.message);
         }
     });
+}
+
+/* =========================================================
+   EXPORT EXCEL / CSV RAPI (PEMISAH TITIK KOMA ;)
+========================================================= */
+
+function exportLowStockCSV() {
+    const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
+    let itemsToExport = [];
+
+    if (isAdmin) {
+        const select = document.getElementById("adminLowStockSelect");
+        const selectedId = select ? select.value : "ALL";
+        
+        if (selectedId === "ALL") {
+            itemsToExport = allLowStockListAdmin.filter(item => isValidStokNumber(item.stokSystem));
+        } else {
+            itemsToExport = allLowStockListAdmin.filter(item => item.kdkmpId === selectedId && isValidStokNumber(item.stokSystem));
+        }
+    } else {
+        itemsToExport = barangList.filter(item => {
+            if (!isValidStokNumber(item.stokSystem)) return false;
+            const stokNum = Number(item.stokSystem);
+            return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
+        });
+    }
+
+    if (itemsToExport.length === 0) {
+        showToast("Tidak ada data stok menipis/habis untuk diunduh.");
+        return;
+    }
+
+    let csvContent = "\uFEFF";
+    csvContent += "sep=;\n";
+    csvContent += "KDKMP;Kode Barang;Nama Barang;Kategori;Sisa Stok;Satuan;Status\n";
+
+    itemsToExport.forEach(item => {
+        const kdkmpName = item.kdkmpNama || currentKdkmp.nama || "-";
+        const isZero = Number(item.stokSystem) === 0;
+        const status = isZero ? "HABIS" : "MENIPIS";
+        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
+        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
+        
+        csvContent += `${kdkmpName};${item.kode};${namaClean};${katClean};${item.stokSystem};${item.satuan};${status}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Data_Stok_Menipis_Habis_${currentKdkmp ? currentKdkmp.id : 'KDKMP'}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("File data stok berhasil diunduh secara rapi!");
+}
+
+function exportKertasStrukCSV() {
+    const emptyKertas = barangList.filter(item => {
+        const name = item.nama ? item.nama.toLowerCase() : "";
+        const cat = item.kategori ? item.kategori.toLowerCase() : "";
+        const isKertas = cat.includes("kertas") || cat.includes("struk") || name.includes("kertas") || name.includes("thermal") || name.includes("struk");
+        return isKertas && isValidStokNumber(item.stokSystem) && Number(item.stokSystem) === 0;
+    });
+
+    if (emptyKertas.length === 0) {
+        showToast("Tidak ada kertas struk habis untuk diunduh.");
+        return;
+    }
+
+    let csvContent = "\uFEFF";
+    csvContent += "sep=;\n";
+    csvContent += "Kode Item;Nama Kertas Struk;Kategori;Sisa Stok;Satuan;Status\n";
+
+    emptyKertas.forEach(item => {
+        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
+        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
+        csvContent += `${item.kode};${namaClean};${katClean};0;${item.satuan};HABIS (KASIR)\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Laporan_Kertas_Struk_Habis_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Laporan kertas struk habis berhasil diunduh!");
 }
 
 /* =========================================================
@@ -829,6 +1001,9 @@ function showPage(pageId, btnEl) {
         populateBarangKeluarDropdown();
         loadBarangKeluarHistory();
     }
+    if (pageId === "tambahBarangPage") {
+        loadNextKodeBarang();
+    }
     if (pageId === "historyPage") loadHistory();
     if (pageId === "masterPage") loadMasterPageData();
     if (window.innerWidth <= 900) toggleSidebar(false);
@@ -878,100 +1053,4 @@ function showConfirmModal(title, msg, onConfirm) {
 
 function closeModal() {
     document.getElementById("confirmModal").classList.add("hidden");
-}
-
-/* =========================================================
-   FUNGSI EXPORT DATA KE CSV / EXCEL (RAPIH DIPISAH KOLOM)
-========================================================= */
-
-function exportLowStockCSV() {
-    const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
-    let itemsToExport = [];
-
-    if (isAdmin) {
-        const select = document.getElementById("adminLowStockSelect");
-        const selectedId = select ? select.value : "ALL";
-        
-        if (selectedId === "ALL") {
-            itemsToExport = allLowStockListAdmin.filter(item => isValidStokNumber(item.stokSystem));
-        } else {
-            itemsToExport = allLowStockListAdmin.filter(item => item.kdkmpId === selectedId && isValidStokNumber(item.stokSystem));
-        }
-    } else {
-        itemsToExport = barangList.filter(item => {
-            if (!isValidStokNumber(item.stokSystem)) return false;
-            const stokNum = Number(item.stokSystem);
-            return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
-        });
-    }
-
-    if (itemsToExport.length === 0) {
-        showToast("Tidak ada data stok menipis/habis untuk diunduh.");
-        return;
-    }
-
-    // Menggunakan Titik Koma (;) sebagai pemisah kolom standar Excel
-    let csvContent = "\uFEFF"; // Byte Order Mark untuk pembacaan UTF-8 Excel
-    csvContent += "sep=;\n";   // Memaksa Excel menggunakan ';' sebagai pemisah kolom
-    csvContent += "KDKMP;Kode Barang;Nama Barang;Kategori;Sisa Stok;Satuan;Status\n";
-
-    itemsToExport.forEach(item => {
-        const kdkmpName = item.kdkmpNama || currentKdkmp.nama || "-";
-        const isZero = Number(item.stokSystem) === 0;
-        const status = isZero ? "HABIS" : "MENIPIS";
-        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
-        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
-        
-        csvContent += `${kdkmpName};${item.kode};${namaClean};${katClean};${item.stokSystem};${item.satuan};${status}\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().slice(0, 10);
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Data_Stok_Menipis_Habis_${currentKdkmp ? currentKdkmp.id : 'KDKMP'}_${dateStr}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showToast("File data stok berhasil diunduh secara rapi!");
-}
-
-function exportKertasStrukCSV() {
-    const emptyKertas = barangList.filter(item => {
-        const name = item.nama ? item.nama.toLowerCase() : "";
-        const cat = item.kategori ? item.kategori.toLowerCase() : "";
-        const isKertas = cat.includes("kertas") || cat.includes("struk") || name.includes("kertas") || name.includes("thermal") || name.includes("struk");
-        return isKertas && isValidStokNumber(item.stokSystem) && Number(item.stokSystem) === 0;
-    });
-
-    if (emptyKertas.length === 0) {
-        showToast("Tidak ada kertas struk habis untuk diunduh.");
-        return;
-    }
-
-    let csvContent = "\uFEFF";
-    csvContent += "sep=;\n";
-    csvContent += "Kode Item;Nama Kertas Struk;Kategori;Sisa Stok;Satuan;Status\n";
-
-    emptyKertas.forEach(item => {
-        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
-        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
-        csvContent += `${item.kode};${namaClean};${katClean};0;${item.satuan};HABIS (KASIR)\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().slice(0, 10);
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Laporan_Kertas_Struk_Habis_${dateStr}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showToast("Laporan kertas struk habis berhasil diunduh!");
 }
