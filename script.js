@@ -8,6 +8,21 @@ let opnameData = {};
 let currentMasterList = [];
 let allLowStockListAdmin = [];
 
+/* =========================================================
+   HELPER PENTING: VALIDASI ANGKA STOK REAL
+========================================================= */
+
+// Memastikan stok benar-benar terisi angka valid (bukan string kosong "", null, atau undefined)
+function isValidStokNumber(val) {
+    if (val === "" || val === null || val === undefined) return false;
+    const num = Number(val);
+    return !isNaN(num);
+}
+
+/* =========================================================
+   INISIALISASI & EVENT LISTENER
+========================================================= */
+
 document.addEventListener("DOMContentLoaded", function () {
     const savedUser = sessionStorage.getItem("kdkmpUser");
     if (savedUser) {
@@ -37,6 +52,10 @@ document.addEventListener("focusin", function (e) {
         e.target.select();
     }
 });
+
+/* =========================================================
+   AUTENTIKASI & INITIAL DATA
+========================================================= */
 
 function login(e) {
     e.preventDefault();
@@ -116,6 +135,9 @@ function renderDashboardInfo() {
     document.getElementById("infoPic").textContent = currentKdkmp.pic;
     document.getElementById("statBarang").textContent = barangList.length;
 
+    // Cek Khusus Peringatan Kertas Struk
+    checkKertasStrukAlert();
+
     const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
     const adminFilterWrapper = document.getElementById("adminLowStockFilterWrapper");
 
@@ -132,146 +154,46 @@ function renderDashboardInfo() {
 }
 
 /* =========================================================
-   FITUR BARANG KELUAR HARIAN (LENGKAP DENGAN SEARCH)
+   PERINGATAN KERTAS STRUK HABIS (HANYA DENGAN ANGKAS 0 REALL)
 ========================================================= */
 
-function populateBarangKeluarDropdown(filterKeyword = "") {
-    const select = document.getElementById("keluarSelectBarang");
-    if (!select) return;
+function checkKertasStrukAlert() {
+    const alertSection = document.getElementById("kertasStrukAlertSection");
+    const tbody = document.getElementById("kertasStrukTableBody");
 
-    const query = filterKeyword.toLowerCase().trim();
-    let optionsHtml = '<option value="">-- Pilih Barang --</option>';
-
-    const filteredItems = barangList.filter(item => {
-        const text = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
-        return text.includes(query);
+    const emptyKertas = barangList.filter(item => {
+        const name = item.nama ? item.nama.toLowerCase() : "";
+        const cat = item.kategori ? item.kategori.toLowerCase() : "";
+        const isKertas = cat.includes("kertas") || cat.includes("struk") || name.includes("kertas") || name.includes("thermal") || name.includes("struk");
+        
+        // Cek apakah stok terisi angka valid DAN bernilai 0
+        const valid = isValidStokNumber(item.stokSystem);
+        return isKertas && valid && Number(item.stokSystem) === 0;
     });
 
-    filteredItems.forEach(item => {
-        optionsHtml += `<option value="${item.kode}">${item.kode} - ${item.nama} (Stok: ${item.stokSystem} ${item.satuan})</option>`;
-    });
+    if (emptyKertas.length > 0) {
+        if (alertSection) alertSection.classList.remove("hidden");
 
-    select.innerHTML = optionsHtml;
-    
-    // Auto select item pertama jika hanya ada 1 hasil pencarian
-    if (filteredItems.length === 1 && query !== "") {
-        select.value = filteredItems[0].kode;
-    }
-    
-    updateKeluarStokInfo();
-}
-
-function filterKeluarBarangOptions() {
-    const keyword = document.getElementById("keluarSearchInput").value;
-    populateBarangKeluarDropdown(keyword);
-}
-
-function updateKeluarStokInfo() {
-    const kode = document.getElementById("keluarSelectBarang").value;
-    const target = barangList.find(b => b.kode === kode);
-    const label = document.getElementById("keluarStokCurrent");
-
-    if (target) {
-        label.textContent = `${target.stokSystem} ${target.satuan}`;
-    } else {
-        label.textContent = "0 PCS";
-    }
-}
-
-function handleBarangKeluarSubmit(e) {
-    e.preventDefault();
-
-    const kodeBarang = document.getElementById("keluarSelectBarang").value;
-    const jumlah = parseInt(document.getElementById("keluarJumlah").value) || 0;
-    const keterangan = document.getElementById("keluarKeterangan").value.trim();
-
-    if (!kodeBarang) {
-        showToast("Harap pilih barang terlebih dahulu.");
-        return;
-    }
-
-    const item = barangList.find(b => b.kode === kodeBarang);
-    if (!item) return;
-
-    if (jumlah <= 0) {
-        showToast("Jumlah barang keluar harus lebih dari 0.");
-        return;
-    }
-
-    if (jumlah > item.stokSystem) {
-        showToast(`Stok tidak mencukupi! Stok tersedia: ${item.stokSystem}`);
-        return;
-    }
-
-    showConfirmModal("Konfirmasi Barang Keluar", `Kurangi stok ${item.nama} sebanyak ${jumlah} ${item.satuan}?`, function () {
-        showToast("Memproses barang keluar...");
-
-        const payload = {
-            action: "submitBarangKeluar",
-            kdkmpId: currentUser.kdkmpId,
-            kodeBarang: kodeBarang,
-            jumlah: jumlah,
-            keterangan: keterangan,
-            petugas: currentUser.name
-        };
-
-        fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.success) {
-                showToast(res.message);
-                document.getElementById("formBarangKeluar").reset();
-                
-                // Refresh data
-                loadInitialData();
-                loadBarangKeluarHistory();
-            } else {
-                showToast("Gagal: " + res.message);
-            }
-        })
-        .catch(err => {
-            console.error("Error barang keluar:", err);
-            showToast("Gagal terhubung ke server.");
+        let html = "";
+        emptyKertas.forEach(item => {
+            html += `
+            <tr style="border-bottom: 1px solid #4a5568;">
+                <td><strong style="color: #f6ad55;">${item.kode}</strong></td>
+                <td><strong>${item.nama}</strong></td>
+                <td>${item.kategori}</td>
+                <td><strong style="color: #e53e3e; font-size: 14px;">0 ${item.satuan}</strong></td>
+                <td><span style="background: #e53e3e; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">⚠️ STRUK HABIS</span></td>
+            </tr>`;
         });
-    });
-}
 
-function loadBarangKeluarHistory() {
-    const tbody = document.getElementById("barangKeluarTableBody");
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Memuat data...</td></tr>';
-
-    fetch(`${API_URL}?action=getBarangKeluarHistory&kdkmpId=${currentUser.kdkmpId}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.success && data.history.length > 0) {
-            let html = "";
-            data.history.forEach(row => {
-                const date = new Date(row.tanggal).toLocaleDateString("id-ID");
-                html += `
-                <tr>
-                    <td><strong>${row.id}</strong></td>
-                    <td>${date}</td>
-                    <td>${row.kode}</td>
-                    <td>${row.nama}</td>
-                    <td><strong style="color: var(--red);">-${row.jumlah}</strong></td>
-                    <td>${row.stokAwal}</td>
-                    <td><strong style="color: var(--green);">${row.stokAkhir}</strong></td>
-                    <td>${row.petugas}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
-        } else {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Belum ada riwayat barang keluar.</td></tr>';
-        }
-    });
+        if (tbody) tbody.innerHTML = html;
+    } else {
+        if (alertSection) alertSection.classList.add("hidden");
+    }
 }
 
 /* =========================================================
-   ADMIN & OTHER FUNCTIONS
+   PERINGATAN STOK MENIPIS / HABIS (MENGABAIKAN KOSONG/NULL)
 ========================================================= */
 
 function checkAndRenderLowStockLocal() {
@@ -279,7 +201,11 @@ function checkAndRenderLowStockLocal() {
     const alertBody = document.getElementById("lowStockTableBody");
     const statMenipisEl = document.getElementById("statMenipis");
 
-    const lowStockItems = barangList.filter(item => Number(item.stokSystem) < MINIMUM_STOCK_THRESHOLD);
+    const lowStockItems = barangList.filter(item => {
+        if (!isValidStokNumber(item.stokSystem)) return false; // Abaikan jika tidak diisi / kosong
+        const stokNum = Number(item.stokSystem);
+        return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
+    });
 
     if (statMenipisEl) statMenipisEl.textContent = lowStockItems.length;
 
@@ -288,7 +214,7 @@ function checkAndRenderLowStockLocal() {
 
         let html = "";
         lowStockItems.forEach(item => {
-            const isZero = Number(item.stokSystem) <= 0;
+            const isZero = Number(item.stokSystem) === 0;
             const badgeClass = isZero ? "text-danger" : "text-warning";
             const badgeText = isZero ? "HABIS" : "MENIPIS";
 
@@ -346,9 +272,15 @@ function renderAdminLowStockTable(list, isAllView = true) {
     const statMenipisEl = document.getElementById("statMenipis");
     const colKdkmp = document.querySelectorAll(".col-kdkmp-admin");
 
-    if (statMenipisEl) statMenipisEl.textContent = list.length;
+    const validList = list.filter(item => {
+        if (!isValidStokNumber(item.stokSystem)) return false; // Abaikan yang tidak diisi
+        const stokNum = Number(item.stokSystem);
+        return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
+    });
 
-    if (list.length > 0) {
+    if (statMenipisEl) statMenipisEl.textContent = validList.length;
+
+    if (validList.length > 0) {
         if (alertSection) alertSection.classList.remove("hidden");
 
         if (isAllView) {
@@ -358,8 +290,8 @@ function renderAdminLowStockTable(list, isAllView = true) {
         }
 
         let html = "";
-        list.forEach(item => {
-            const isZero = Number(item.stokSystem) <= 0;
+        validList.forEach(item => {
+            const isZero = Number(item.stokSystem) === 0;
             const badgeClass = isZero ? "text-danger" : "text-warning";
             const badgeText = isZero ? "HABIS" : "MENIPIS";
 
@@ -380,68 +312,152 @@ function renderAdminLowStockTable(list, isAllView = true) {
     }
 }
 
-function renderKategoriFilter() {
-    const kategoris = [...new Set(barangList.map(item => item.kategori))];
-    const select = document.getElementById("kategoriFilter");
-    select.innerHTML = '<option value="">Semua Kategori</option>';
-    kategoris.forEach(kat => {
-        if (kat) select.innerHTML += `<option value="${kat}">${kat}</option>`;
+/* =========================================================
+   BARANG KELUAR HARIAN & PENCARIAN
+========================================================= */
+
+function populateBarangKeluarDropdown(filterKeyword = "") {
+    const select = document.getElementById("keluarSelectBarang");
+    if (!select) return;
+
+    const query = filterKeyword.toLowerCase().trim();
+    let optionsHtml = '<option value="">-- Pilih Barang --</option>';
+
+    const filteredItems = barangList.filter(item => {
+        const text = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
+        return text.includes(query);
     });
+
+    filteredItems.forEach(item => {
+        const stokDisplay = isValidStokNumber(item.stokSystem) ? `${item.stokSystem} ${item.satuan}` : 'Belum diisi';
+        optionsHtml += `<option value="${item.kode}">${item.kode} - ${item.nama} (Stok: ${stokDisplay})</option>`;
+    });
+
+    select.innerHTML = optionsHtml;
+
+    if (filteredItems.length === 1 && query !== "") {
+        select.value = filteredItems[0].kode;
+    }
+    
+    updateKeluarStokInfo();
 }
 
-function renderBarangInput() {
-    const container = document.getElementById("barangContainer");
-    if (!barangList.length) {
-        container.innerHTML = '<div class="empty-state">Tidak ada barang terdaftar.</div>';
+function filterKeluarBarangOptions() {
+    const keyword = document.getElementById("keluarSearchInput").value;
+    populateBarangKeluarDropdown(keyword);
+}
+
+function updateKeluarStokInfo() {
+    const kode = document.getElementById("keluarSelectBarang").value;
+    const target = barangList.find(b => b.kode === kode);
+    const label = document.getElementById("keluarStokCurrent");
+
+    if (target && isValidStokNumber(target.stokSystem)) {
+        label.textContent = `${target.stokSystem} ${target.satuan}`;
+    } else {
+        label.textContent = "-";
+    }
+}
+
+function handleBarangKeluarSubmit(e) {
+    e.preventDefault();
+
+    const kodeBarang = document.getElementById("keluarSelectBarang").value;
+    const jumlah = parseInt(document.getElementById("keluarJumlah").value) || 0;
+    const keterangan = document.getElementById("keluarKeterangan").value.trim();
+
+    if (!kodeBarang) {
+        showToast("Harap pilih barang terlebih dahulu.");
         return;
     }
 
-    let html = "";
-    barangList.forEach(item => {
-        const saved = opnameData[item.kode] || { ctn: "", pcs: "", total: 0 };
-        const searchText = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
+    const item = barangList.find(b => b.kode === kodeBarang);
+    if (!item) return;
 
-        html += `
-        <div class="barang-card" id="card-${item.kode}" data-search="${searchText}" data-category="${item.kategori || ''}">
-            <div class="barang-top">
-                <div class="barang-info">
-                    <div class="barang-code">${item.kode}</div>
-                    <div class="barang-name">${item.nama}</div>
-                    <div class="barang-category">Kategori: ${item.kategori} | 1 CTN = ${item.isiCtn} ${item.satuan}</div>
-                </div>
-                <div class="stok-system">
-                    <span>Stok Sistem</span>
-                    <strong>${item.stokSystem} ${item.satuan}</strong>
-                </div>
-            </div>
-            
-            <div class="stock-input-area">
-                <div class="input-box"><label>Fisik (CTN)</label><input type="number" min="0" placeholder="0" value="${saved.ctn}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})"></div>
-                <div class="input-box"><label>Fisik (PCS)</label><input type="number" min="0" placeholder="0" value="${saved.pcs}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, ${item.stokSystem})"></div>
-                <div class="result-box"><span>Total Fisik</span><strong id="total-${item.kode}">${saved.total} ${item.satuan}</strong></div>
-                <div class="result-box"><span>Selisih</span><strong id="selisih-${item.kode}">${saved.total - item.stokSystem}</strong></div>
-            </div>
-        </div>`;
+    if (!isValidStokNumber(item.stokSystem)) {
+        showToast("Stok barang ini belum diisi di sistem.");
+        return;
+    }
+
+    if (jumlah <= 0) {
+        showToast("Jumlah barang keluar harus lebih dari 0.");
+        return;
+    }
+
+    if (jumlah > Number(item.stokSystem)) {
+        showToast(`Stok tidak mencukupi! Stok tersedia: ${item.stokSystem}`);
+        return;
+    }
+
+    showConfirmModal("Konfirmasi Barang Keluar", `Kurangi stok ${item.nama} sebanyak ${jumlah} ${item.satuan}?`, function () {
+        showToast("Memproses barang keluar...");
+
+        const payload = {
+            action: "submitBarangKeluar",
+            kdkmpId: currentUser.kdkmpId,
+            kodeBarang: kodeBarang,
+            jumlah: jumlah,
+            keterangan: keterangan,
+            petugas: currentUser.name
+        };
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                showToast(res.message);
+                document.getElementById("formBarangKeluar").reset();
+                
+                loadInitialData();
+                loadBarangKeluarHistory();
+            } else {
+                showToast("Gagal: " + res.message);
+            }
+        })
+        .catch(err => {
+            console.error("Error barang keluar:", err);
+            showToast("Gagal terhubung ke server.");
+        });
     });
-
-    container.innerHTML = html;
-    updateProgress();
 }
 
-function filterBarang() {
-    const searchInput = document.getElementById("barangSearch");
-    const categorySelect = document.getElementById("kategoriFilter");
+function loadBarangKeluarHistory() {
+    const tbody = document.getElementById("barangKeluarTableBody");
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Memuat data...</td></tr>';
 
-    const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : "";
-    const categoryValue = categorySelect ? categorySelect.value : "";
-    const cards = document.querySelectorAll("#barangContainer .barang-card");
-
-    cards.forEach(card => {
-        const matchSearch = (card.getAttribute("data-search") || "").includes(searchValue);
-        const matchCategory = !categoryValue || card.getAttribute("data-category") === categoryValue;
-        card.classList.toggle("hidden", !(matchSearch && matchCategory));
+    fetch(`${API_URL}?action=getBarangKeluarHistory&kdkmpId=${currentUser.kdkmpId}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.history.length > 0) {
+            let html = "";
+            data.history.forEach(row => {
+                const date = new Date(row.tanggal).toLocaleDateString("id-ID");
+                html += `
+                <tr>
+                    <td><strong>${row.id}</strong></td>
+                    <td>${date}</td>
+                    <td>${row.kode}</td>
+                    <td>${row.nama}</td>
+                    <td><strong style="color: var(--red);">-${row.jumlah}</strong></td>
+                    <td>${row.stokAwal}</td>
+                    <td><strong style="color: var(--green);">${row.stokAkhir}</strong></td>
+                    <td>${row.petugas}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Belum ada riwayat barang keluar.</td></tr>';
+        }
     });
 }
+
+/* =========================================================
+   PERSETUJUAN AKUN USER PENDING
+========================================================= */
 
 function loadPendingUsers() {
     const section = document.getElementById("pendingUserSection");
@@ -490,6 +506,10 @@ function verifyUser(username, status) {
         }
     });
 }
+
+/* =========================================================
+   MASTER BARANG PAGE
+========================================================= */
 
 function loadMasterPageData() {
     const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
@@ -561,6 +581,7 @@ function renderMasterTable(list) {
     let html = "";
     
     list.forEach(item => {
+        const stokDisplay = isValidStokNumber(item.stokSystem) ? `${item.stokSystem} ${item.satuan}` : '-';
         html += `
         <tr class="master-row" data-search="${item.kode.toLowerCase()} ${item.nama.toLowerCase()} ${item.kategori.toLowerCase()}" data-category="${item.kategori || ''}">
             <td><strong>${item.kode}</strong></td>
@@ -568,7 +589,7 @@ function renderMasterTable(list) {
             <td>${item.kategori}</td>
             <td>${item.isiCtn}</td>
             <td>${item.satuan}</td>
-            <td><strong style="color: var(--primary);">${item.stokSystem} ${item.satuan}</strong></td>
+            <td><strong style="color: var(--primary);">${stokDisplay}</strong></td>
         </tr>`;
     });
 
@@ -587,22 +608,96 @@ function filterMasterTable() {
     });
 }
 
-function calculateItem(kode, isiCtn, stokSystem) {
+/* =========================================================
+   STOCK OPNAME FORM & HISTORY
+========================================================= */
+
+function renderKategoriFilter() {
+    const kategoris = [...new Set(barangList.map(item => item.kategori))];
+    const select = document.getElementById("kategoriFilter");
+    select.innerHTML = '<option value="">Semua Kategori</option>';
+    kategoris.forEach(kat => {
+        if (kat) select.innerHTML += `<option value="${kat}">${kat}</option>`;
+    });
+}
+
+function renderBarangInput() {
+    const container = document.getElementById("barangContainer");
+    if (!barangList.length) {
+        container.innerHTML = '<div class="empty-state">Tidak ada barang terdaftar.</div>';
+        return;
+    }
+
+    let html = "";
+    barangList.forEach(item => {
+        const saved = opnameData[item.kode] || { ctn: "", pcs: "", total: 0 };
+        const searchText = `${item.kode} ${item.nama} ${item.kategori}`.toLowerCase();
+        const stokDisplay = isValidStokNumber(item.stokSystem) ? `${item.stokSystem} ${item.satuan}` : '-';
+
+        html += `
+        <div class="barang-card" id="card-${item.kode}" data-search="${searchText}" data-category="${item.kategori || ''}">
+            <div class="barang-top">
+                <div class="barang-info">
+                    <div class="barang-code">${item.kode}</div>
+                    <div class="barang-name">${item.nama}</div>
+                    <div class="barang-category">Kategori: ${item.kategori} | 1 CTN = ${item.isiCtn} ${item.satuan}</div>
+                </div>
+                <div class="stok-system">
+                    <span>Stok Sistem</span>
+                    <strong>${stokDisplay}</strong>
+                </div>
+            </div>
+            
+            <div class="stock-input-area">
+                <div class="input-box"><label>Fisik (CTN)</label><input type="number" min="0" placeholder="0" value="${saved.ctn}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, '${item.stokSystem}')"></div>
+                <div class="input-box"><label>Fisik (PCS)</label><input type="number" min="0" placeholder="0" value="${saved.pcs}" oninput="calculateItem('${item.kode}', ${item.isiCtn}, '${item.stokSystem}')"></div>
+                <div class="result-box"><span>Total Fisik</span><strong id="total-${item.kode}">${saved.total} ${item.satuan}</strong></div>
+                <div class="result-box"><span>Selisih</span><strong id="selisih-${item.kode}">${isValidStokNumber(item.stokSystem) ? saved.total - Number(item.stokSystem) : '-'}</strong></div>
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+    updateProgress();
+}
+
+function filterBarang() {
+    const searchInput = document.getElementById("barangSearch");
+    const categorySelect = document.getElementById("kategoriFilter");
+
+    const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const categoryValue = categorySelect ? categorySelect.value : "";
+    const cards = document.querySelectorAll("#barangContainer .barang-card");
+
+    cards.forEach(card => {
+        const matchSearch = (card.getAttribute("data-search") || "").includes(searchValue);
+        const matchCategory = !categoryValue || card.getAttribute("data-category") === categoryValue;
+        card.classList.toggle("hidden", !(matchSearch && matchCategory));
+    });
+}
+
+function calculateItem(kode, isiCtn, rawStokSystem) {
     const card = document.getElementById(`card-${kode}`);
     const inputs = card.querySelectorAll("input");
     const ctn = parseInt(inputs[0].value) || 0;
     const pcs = parseInt(inputs[1].value) || 0;
 
     const totalFisik = (ctn * isiCtn) + pcs;
-    const selisih = totalFisik - stokSystem;
+    const stokSysNum = isValidStokNumber(rawStokSystem) ? Number(rawStokSystem) : 0;
+    const selisih = totalFisik - stokSysNum;
 
     document.getElementById(`total-${kode}`).textContent = `${totalFisik}`;
     
     const selisihEl = document.getElementById(`selisih-${kode}`);
-    selisihEl.textContent = selisih > 0 ? `+${selisih}` : selisih;
-    selisihEl.className = selisih === 0 ? "status-sesuai" : (selisih < 0 ? "text-danger" : "text-warning");
+    if (isValidStokNumber(rawStokSystem)) {
+        selisihEl.textContent = selisih > 0 ? `+${selisih}` : selisih;
+        selisihEl.className = selisih === 0 ? "status-sesuai" : (selisih < 0 ? "text-danger" : "text-warning");
+    } else {
+        selisihEl.textContent = "-";
+        selisihEl.className = "";
+    }
 
-    opnameData[kode] = { kode: kode, ctn: ctn, pcs: pcs, stokSystem: stokSystem, stokFisik: totalFisik };
+    opnameData[kode] = { kode: kode, ctn: ctn, pcs: pcs, stokSystem: stokSysNum, stokFisik: totalFisik };
     updateProgress();
 }
 
@@ -694,6 +789,10 @@ function loadHistory() {
     });
 }
 
+/* =========================================================
+   UI HELPER FUNCTIONS (NAVIGATION & MODALS)
+========================================================= */
+
 function togglePasswordVisibility(inputId, btnEl, event) {
     if (event) {
         event.preventDefault();
@@ -779,4 +878,100 @@ function showConfirmModal(title, msg, onConfirm) {
 
 function closeModal() {
     document.getElementById("confirmModal").classList.add("hidden");
+}
+
+/* =========================================================
+   FUNGSI EXPORT DATA KE CSV / EXCEL (RAPIH DIPISAH KOLOM)
+========================================================= */
+
+function exportLowStockCSV() {
+    const isAdmin = currentUser && (currentUser.role.toLowerCase() === "admin" || currentUser.kdkmpId === "ALL");
+    let itemsToExport = [];
+
+    if (isAdmin) {
+        const select = document.getElementById("adminLowStockSelect");
+        const selectedId = select ? select.value : "ALL";
+        
+        if (selectedId === "ALL") {
+            itemsToExport = allLowStockListAdmin.filter(item => isValidStokNumber(item.stokSystem));
+        } else {
+            itemsToExport = allLowStockListAdmin.filter(item => item.kdkmpId === selectedId && isValidStokNumber(item.stokSystem));
+        }
+    } else {
+        itemsToExport = barangList.filter(item => {
+            if (!isValidStokNumber(item.stokSystem)) return false;
+            const stokNum = Number(item.stokSystem);
+            return stokNum >= 0 && stokNum < MINIMUM_STOCK_THRESHOLD;
+        });
+    }
+
+    if (itemsToExport.length === 0) {
+        showToast("Tidak ada data stok menipis/habis untuk diunduh.");
+        return;
+    }
+
+    // Menggunakan Titik Koma (;) sebagai pemisah kolom standar Excel
+    let csvContent = "\uFEFF"; // Byte Order Mark untuk pembacaan UTF-8 Excel
+    csvContent += "sep=;\n";   // Memaksa Excel menggunakan ';' sebagai pemisah kolom
+    csvContent += "KDKMP;Kode Barang;Nama Barang;Kategori;Sisa Stok;Satuan;Status\n";
+
+    itemsToExport.forEach(item => {
+        const kdkmpName = item.kdkmpNama || currentKdkmp.nama || "-";
+        const isZero = Number(item.stokSystem) === 0;
+        const status = isZero ? "HABIS" : "MENIPIS";
+        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
+        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
+        
+        csvContent += `${kdkmpName};${item.kode};${namaClean};${katClean};${item.stokSystem};${item.satuan};${status}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Data_Stok_Menipis_Habis_${currentKdkmp ? currentKdkmp.id : 'KDKMP'}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("File data stok berhasil diunduh secara rapi!");
+}
+
+function exportKertasStrukCSV() {
+    const emptyKertas = barangList.filter(item => {
+        const name = item.nama ? item.nama.toLowerCase() : "";
+        const cat = item.kategori ? item.kategori.toLowerCase() : "";
+        const isKertas = cat.includes("kertas") || cat.includes("struk") || name.includes("kertas") || name.includes("thermal") || name.includes("struk");
+        return isKertas && isValidStokNumber(item.stokSystem) && Number(item.stokSystem) === 0;
+    });
+
+    if (emptyKertas.length === 0) {
+        showToast("Tidak ada kertas struk habis untuk diunduh.");
+        return;
+    }
+
+    let csvContent = "\uFEFF";
+    csvContent += "sep=;\n";
+    csvContent += "Kode Item;Nama Kertas Struk;Kategori;Sisa Stok;Satuan;Status\n";
+
+    emptyKertas.forEach(item => {
+        const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
+        const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
+        csvContent += `${item.kode};${namaClean};${katClean};0;${item.satuan};HABIS (KASIR)\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Laporan_Kertas_Struk_Habis_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Laporan kertas struk habis berhasil diunduh!");
 }
