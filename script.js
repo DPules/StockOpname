@@ -585,7 +585,7 @@ function verifyUser(username, status) {
 }
 
 /* =========================================================
-   EXPORT EXCEL / CSV RAPI (PEMISAH TITIK KOMA ;)
+   EXPORT EXCEL / CSV RAPI (TERMASUK KOLOM PRINCIPAL)
 ========================================================= */
 
 function exportLowStockCSV() {
@@ -616,16 +616,18 @@ function exportLowStockCSV() {
 
     let csvContent = "\uFEFF";
     csvContent += "sep=;\n";
-    csvContent += "KDKMP;Kode Barang;Nama Barang;Kategori;Sisa Stok;Satuan;Status\n";
+    // Header CSV dengan Kolom Principal
+    csvContent += "KDKMP;Kode Barang;Nama Barang;Principal;Kategori;Sisa Stok;Satuan;Status\n";
 
     itemsToExport.forEach(item => {
-        const kdkmpName = item.kdkmpNama || currentKdkmp.nama || "-";
+        const kdkmpName = item.kdkmpNama || (currentKdkmp ? currentKdkmp.nama : "-");
         const isZero = Number(item.stokSystem) === 0;
         const status = isZero ? "HABIS" : "MENIPIS";
         const namaClean = item.nama ? item.nama.replace(/;/g, ',') : '';
+        const principalClean = item.principal ? item.principal.replace(/;/g, ',') : '-';
         const katClean = item.kategori ? item.kategori.replace(/;/g, ',') : '';
         
-        csvContent += `${kdkmpName};${item.kode};${namaClean};${katClean};${item.stokSystem};${item.satuan};${status}\n`;
+        csvContent += `${kdkmpName};${item.kode};${namaClean};${principalClean};${katClean};${item.stokSystem};${item.satuan};${status}\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -639,7 +641,7 @@ function exportLowStockCSV() {
     link.click();
     document.body.removeChild(link);
 
-    showToast("File data stok berhasil diunduh secara rapi!");
+    showToast("File Excel data stok beserta Principal berhasil diunduh!");
 }
 
 function exportKertasStrukCSV() {
@@ -934,7 +936,7 @@ function submitOpname() {
 
 function loadHistory() {
     const tbody = document.getElementById("historyTable");
-    tbody.innerHTML = '<tr><td colspan="7">Memuat riwayat...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Memuat riwayat...</td></tr>';
 
     fetch(`${API_URL}?action=getHistory&kdkmpId=${currentUser.kdkmpId}`)
     .then(res => res.json())
@@ -944,21 +946,79 @@ function loadHistory() {
             data.history.forEach(row => {
                 const date = new Date(row.tanggal).toLocaleDateString("id-ID");
                 html += `
-                <tr>
-                    <td><strong>${row.id}</strong></td>
+                <tr style="cursor: pointer;" onclick="viewOpnameDetail('${row.id}')">
+                    <td><strong style="color: var(--primary);">${row.id}</strong></td>
                     <td>${date}</td>
                     <td>${row.kdkmp}</td>
                     <td>${row.petugas}</td>
-                    <td>${row.totalItem}</td>
-                    <td><span class="${row.totalSelisih > 0 ? 'text-danger' : ''}">${row.totalSelisih}</span></td>
-                    <td><span class="status-badge status-sesuai">${row.status}</span></td>
+                    <td>${row.totalItem} Item</td>
+                    <td><span class="${row.totalSelisih > 0 ? 'text-danger' : ''}">${row.totalSelisih} Selisih</span></td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px !important;" onclick="event.stopPropagation(); viewOpnameDetail('${row.id}')">
+                            🔎 Lihat Item
+                        </button>
+                    </td>
                 </tr>`;
             });
             tbody.innerHTML = html;
         } else {
-            tbody.innerHTML = '<tr><td colspan="7">Belum ada riwayat opname.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Belum ada riwayat opname.</td></tr>';
         }
     });
+}
+
+/* =========================================================
+   POPUP LIHAT DETAIL BARANG TER-OPNAME
+========================================================= */
+
+function viewOpnameDetail(opnameId) {
+    const modal = document.getElementById("opnameDetailModal");
+    const title = document.getElementById("opnameDetailTitle");
+    const sub = document.getElementById("opnameDetailSub");
+    const tbody = document.getElementById("opnameDetailTableBody");
+
+    title.textContent = `Detail Opname: ${opnameId}`;
+    sub.textContent = "Memuat daftar barang...";
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Memuat detail barang ter-opname...</td></tr>';
+
+    modal.classList.remove("hidden");
+
+    fetch(`${API_URL}?action=getOpnameDetail&opnameId=${opnameId}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.items.length > 0) {
+            sub.textContent = `Total ${data.items.length} item terdaftar dalam opname ini`;
+            let html = "";
+            data.items.forEach(item => {
+                const selisihVal = Number(item.selisih);
+                const selisihText = selisihVal > 0 ? `+${selisihVal}` : selisihVal;
+                const statusColor = selisihVal === 0 ? "var(--green)" : (selisihVal < 0 ? "var(--red)" : "var(--orange)");
+
+                html += `
+                <tr>
+                    <td><strong>${item.kode}</strong></td>
+                    <td>${item.nama || '-'}</td>
+                    <td>${item.stokSystem}</td>
+                    <td>${item.ctn} CTN / ${item.pcs} PCS</td>
+                    <td><strong>${item.stokFisik}</strong></td>
+                    <td><strong style="color: ${statusColor}">${selisihText}</strong></td>
+                    <td><span class="status-badge" style="background: #f0f4f8; color: ${statusColor}">${item.status}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        } else {
+            sub.textContent = "Tidak ada detail barang.";
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Tidak ditemukan detail item barang untuk ID Opname ini.</td></tr>';
+        }
+    })
+    .catch(err => {
+        console.error("Error get detail opname:", err);
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Gagal memuat detail barang.</td></tr>';
+    });
+}
+
+function closeOpnameDetailModal() {
+    document.getElementById("opnameDetailModal").classList.add("hidden");
 }
 
 /* =========================================================

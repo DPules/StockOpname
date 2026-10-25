@@ -23,17 +23,14 @@
                 <form id="loginForm">
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" id="username" placeholder="Masukkan username" required
-                            autocomplete="username">
+                        <input type="text" id="username" placeholder="Masukkan username" required autocomplete="username">
                     </div>
 
                     <div class="form-group">
                         <label>Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" placeholder="Masukkan password" required
-                                autocomplete="current-password">
-                            <button type="button" class="toggle-password"
-                                onclick="togglePasswordVisibility('password', this, event)">👁️</button>
+                            <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', this, event)">👁️</button>
                         </div>
                     </div>
 
@@ -44,8 +41,7 @@
 
                 <div style="text-align: center; margin-top: 20px; font-size: 13px;">
                     <span style="color: var(--muted);">Belum punya akun?</span>
-                    <a href="register.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">
-                        Daftar di sini</a>
+                    <a href="register.html" style="color: var(--primary); font-weight: bold; text-decoration: none;"> Daftar di sini</a>
                 </div>
             </div>
         </div>
@@ -69,17 +65,12 @@
             </div>
 
             <nav class="menu">
-                <button class="menu-item active" onclick="showPage('dashboardPage', this)"><span>📊</span>
-                    Dashboard</button>
-                <button class="menu-item" onclick="showPage('barangKeluarPage', this)"><span>📤</span> Barang
-                    Keluar</button>
-                <button class="menu-item" onclick="showPage('tambahBarangPage', this)"><span>➕</span> Tambah
-                    Barang</button>
+                <button class="menu-item active" onclick="showPage('dashboardPage', this)"><span>📊</span> Dashboard</button>
+                <button class="menu-item" onclick="showPage('barangKeluarPage', this)"><span>📤</span> Barang Keluar</button>
+                <button class="menu-item" onclick="showPage('tambahBarangPage', this)"><span>➕</span> Tambah Barang</button>
                 <button class="menu-item" onclick="showPage('opnamePage', this)"><span>📦</span> Stock Opname</button>
-                <button class="menu-item" onclick="showPage('historyPage', this)"><span>📋</span> Riwayat
-                    Opname</button>
-                <button class="menu-item admin-menu" onclick="showPage('masterPage', this)"><span>🗂️</span> Master
-                    Barang</button>
+                <button class="menu-item" onclick="showPage('historyPage', this)"><span>📋</span> Riwayat Opname</button>
+                <button class="menu-item admin-menu" onclick="showPage('masterPage', this)"><span>🗂️</span> Master Barang</button>
             </nav>
 
             <div class="sidebar-footer">
@@ -122,44 +113,26 @@
                 </div>
 
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue">📦</div>
-                        <div><span>Total Item</span><strong id="statBarang">0</strong></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon green">✓</div>
-                        <div><span>Opname Selesai</span><strong id="statSelesai">0</strong></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon orange">⏳</div>
-                        <div><span>Proses Opname</span><strong id="statVerifikasi">0</strong></div>
-                    </div>
-                    <div class="stat-card" id="statCardMenipis" style="border-left: 4px solid var(--red);">
-                        <div class="stat-icon red">⚠️</div>
-                        <div><span>Stok Menipis</span><strong id="statMenipis" style="color: var(--red);">0</strong>
-                        </div>
-                    </div>
+                    <div class="stat-card"><div class="stat-icon blue">📦</div><div><span>Total Item</span><strong id="statBarang">0</strong></div></div>
+                    <div class="stat-card"><div class="stat-icon green">✓</div><div><span>Opname Selesai</span><strong id="statSelesai">0</strong></div></div>
+                    <div class="stat-card"><div class="stat-icon orange">⏳</div><div><span>Proses Opname</span><strong id="statVerifikasi">0</strong></div></div>
+                    <div class="stat-card" id="statCardMenipis" style="border-left: 4px solid var(--red);"><div class="stat-icon red">⚠️</div><div><span>Stok Menipis</span><strong id="statMenipis" style="color: var(--red);">0</strong></div></div>
                 </div>
 
                 <!-- NOTIFIKASI KHUSUS: KERTAS STRUK HABIS -->
-                <div id="kertasStrukAlertSection" class="section-card hidden"
-                    style="border: 2px solid #2d3748; background: #1a202c; color: white; margin-bottom: 16px;">
-                    <div class="section-header"
-                        style="background: #2d3748; border-bottom: 1px solid #4a5568; flex-wrap: wrap; gap: 12px;">
+                <div id="kertasStrukAlertSection" class="section-card hidden" style="border: 2px solid #2d3748; background: #1a202c; color: white; margin-bottom: 16px;">
+                    <div class="section-header" style="background: #2d3748; border-bottom: 1px solid #4a5568; flex-wrap: wrap; gap: 12px;">
                         <div>
                             <h3 style="color: #f6ad55; display: flex; align-items: center; gap: 8px; font-size: 16px;">
                                 <span>🧻</span> PERINGATAN KRITIS: KERTAS STRUK HABIS!
                             </h3>
-                            <p style="color: #cbd5e0;">Kertas thermal/struk kasir berikut bernilai 0 (Habis). Harap
-                                segera lakukan restock!</p>
+                            <p style="color: #cbd5e0;">Kertas thermal/struk kasir berikut bernilai 0 (Habis). Harap segera lakukan restock!</p>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;"
-                                onclick="exportKertasStrukCSV()">
+                            <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;" onclick="exportKertasStrukCSV()">
                                 📥 Download Excel
                             </button>
-                            <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;"
-                                onclick="showPage('barangKeluarPage')">
+                            <button class="btn btn-light" style="font-size: 12px !important; padding: 6px 12px;" onclick="showPage('barangKeluarPage')">
                                 Cek Barang
                             </button>
                         </div>
@@ -176,18 +149,14 @@
                                 </tr>
                             </thead>
                             <tbody id="kertasStrukTableBody">
-                                <tr>
-                                    <td colspan="5" class="empty-state" style="color: #a0aec0;">Memeriksa ketersediaan
-                                        kertas struk...</td>
-                                </tr>
+                                <tr><td colspan="5" class="empty-state" style="color: #a0aec0;">Memeriksa ketersediaan kertas struk...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- TABEL PERSETUJUAN USER PENDING -->
-                <div id="pendingUserSection" class="section-card hidden"
-                    style="margin-bottom: 16px; border: 2px solid var(--orange);">
+                <div id="pendingUserSection" class="section-card hidden" style="margin-bottom: 16px; border: 2px solid var(--orange);">
                     <div class="section-header" style="background: #fffbeb;">
                         <div>
                             <h3 style="color: var(--orange); display: flex; align-items: center; gap: 8px;">
@@ -199,26 +168,15 @@
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Nama Lengkap</th>
-                                    <th>Role</th>
-                                    <th>KDKMP ID</th>
-                                    <th>Aksi</th>
-                                </tr>
+                                <tr><th>Username</th><th>Nama Lengkap</th><th>Role</th><th>KDKMP ID</th><th>Aksi</th></tr>
                             </thead>
-                            <tbody id="pendingUserTableBody">
-                                <tr>
-                                    <td colspan="5" class="empty-state">Memuat data verifikasi...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="pendingUserTableBody"><tr><td colspan="5" class="empty-state">Memuat data verifikasi...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- WIDGET PERINGATAN STOK MENIPIS / HABIS -->
-                <div id="lowStockAlertSection" class="section-card hidden"
-                    style="border: 2px solid var(--red); margin-bottom: 16px;">
+                <div id="lowStockAlertSection" class="section-card hidden" style="border: 2px solid var(--red); margin-bottom: 16px;">
                     <div class="section-header" style="background: #fef2f2; flex-wrap: wrap; gap: 12px;">
                         <div>
                             <h3 style="color: var(--red); display: flex; align-items: center; gap: 8px;">
@@ -229,20 +187,16 @@
 
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                             <div id="adminLowStockFilterWrapper" class="hidden" style="min-width: 180px;">
-                                <select id="adminLowStockSelect" onchange="filterLowStockByAdmin(this.value)"
-                                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
+                                <select id="adminLowStockSelect" onchange="filterLowStockByAdmin(this.value)" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
                                     <option value="ALL">Semua KDKMP</option>
                                 </select>
                             </div>
 
-                            <button class="btn btn-primary"
-                                style="background: #27ae60; border-color: #27ae60; font-size: 13px !important; padding: 6px 12px;"
-                                onclick="exportLowStockCSV()">
+                            <button class="btn btn-primary" style="background: #27ae60; border-color: #27ae60; font-size: 13px !important; padding: 6px 12px;" onclick="exportLowStockCSV()">
                                 📥 Download Excel
                             </button>
 
-                            <button class="btn btn-secondary" style="color: var(--red);"
-                                onclick="showPage('masterPage')">
+                            <button class="btn btn-secondary" style="color: var(--red);" onclick="showPage('masterPage')">
                                 Lihat Katalog
                             </button>
                         </div>
@@ -260,21 +214,14 @@
                                 </tr>
                             </thead>
                             <tbody id="lowStockTableBody">
-                                <tr>
-                                    <td colspan="6" class="empty-state">Mengecek stok barang...</td>
-                                </tr>
+                                <tr><td colspan="6" class="empty-state">Mengecek stok barang...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <div class="section-card">
-                    <div class="section-header">
-                        <div>
-                            <h3>Informasi KDKMP</h3>
-                            <p>Data lokasi dan Penanggung Jawab (PIC)</p>
-                        </div>
-                    </div>
+                    <div class="section-header"><div><h3>Informasi KDKMP</h3><p>Data lokasi dan Penanggung Jawab (PIC)</p></div></div>
                     <div class="info-grid">
                         <div class="info-item"><span>ID KDKMP</span><strong id="infoIdKdkmp">-</strong></div>
                         <div class="info-item"><span>Nama KDKMP</span><strong id="infoNamaKdkmp">-</strong></div>
@@ -301,43 +248,32 @@
                                 <label>Cari / Filter Nama Barang</label>
                                 <div class="search-wrapper" style="margin-bottom: 8px;">
                                     <span class="search-icon">🔎</span>
-                                    <input type="text" id="keluarSearchInput"
-                                        placeholder="Ketik nama atau kode barang..."
-                                        oninput="filterKeluarBarangOptions()"
-                                        style="width: 100%; padding: 12px 12px 12px 42px; border: 1px solid var(--border); border-radius: 10px;">
+                                    <input type="text" id="keluarSearchInput" placeholder="Ketik nama atau kode barang..." oninput="filterKeluarBarangOptions()" style="width: 100%; padding: 12px 12px 12px 42px; border: 1px solid var(--border); border-radius: 10px;">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>Pilih Barang Terfilter</label>
-                                <select id="keluarSelectBarang" required onchange="updateKeluarStokInfo()"
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <select id="keluarSelectBarang" required onchange="updateKeluarStokInfo()" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                                     <option value="">-- Pilih Barang --</option>
                                 </select>
                             </div>
 
-                            <div class="form-group"
-                                style="display: flex; gap: 12px; align-items: center; background: #f8f9fa; padding: 12px; border-radius: 10px; margin-bottom: 16px;">
+                            <div class="form-group" style="display: flex; gap: 12px; align-items: center; background: #f8f9fa; padding: 12px; border-radius: 10px; margin-bottom: 16px;">
                                 <div>
-                                    <span style="font-size: 11px; color: var(--muted); display: block;">Stok Sistem Saat
-                                        Ini</span>
-                                    <strong id="keluarStokCurrent" style="font-size: 18px; color: var(--primary);">0
-                                        PCS</strong>
+                                    <span style="font-size: 11px; color: var(--muted); display: block;">Stok Sistem Saat Ini</span>
+                                    <strong id="keluarStokCurrent" style="font-size: 18px; color: var(--primary);">0 PCS</strong>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>Jumlah Keluar (PCS/ROLL)</label>
-                                <input type="number" id="keluarJumlah" min="1"
-                                    placeholder="Masukkan jumlah barang keluar" required
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <input type="number" id="keluarJumlah" min="1" placeholder="Masukkan jumlah barang keluar" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                             </div>
 
                             <div class="form-group">
                                 <label>Keterangan / Keperluan</label>
-                                <input type="text" id="keluarKeterangan"
-                                    placeholder="Contoh: Pemakaian Kertas Struk Kasir / Penjualan"
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <input type="text" id="keluarKeterangan" placeholder="Contoh: Pemakaian Kertas Struk Kasir / Penjualan" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-full">Submit & Update Stok</button>
@@ -356,22 +292,9 @@
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>ID Transaksi</th>
-                                    <th>Tanggal</th>
-                                    <th>Kode</th>
-                                    <th>Nama Barang</th>
-                                    <th>Jumlah Keluar</th>
-                                    <th>Stok Awal</th>
-                                    <th>Sisa Stok</th>
-                                    <th>Petugas</th>
-                                </tr>
+                                <tr><th>ID Transaksi</th><th>Tanggal</th><th>Kode</th><th>Nama Barang</th><th>Jumlah Keluar</th><th>Stok Awal</th><th>Sisa Stok</th><th>Petugas</th></tr>
                             </thead>
-                            <tbody id="barangKeluarTableBody">
-                                <tr>
-                                    <td colspan="8" class="empty-state">Memuat data transaksi...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="barangKeluarTableBody"><tr><td colspan="8" class="empty-state">Memuat data transaksi...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -390,51 +313,37 @@
                         <form id="formTambahBarang" onsubmit="handleTambahBarangSubmit(event)">
                             <div class="form-group">
                                 <label>Kode Barang <span style="color:var(--red);">* (Otomatis)</span></label>
-                                <input type="text" id="addKodeBarang" placeholder="Memuat kode otomatis..." required
-                                    readonly
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8f9fa; font-weight: bold; color: var(--primary);">
+                                <input type="text" id="addKodeBarang" placeholder="Memuat kode otomatis..." required readonly style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8f9fa; font-weight: bold; color: var(--primary);">
                             </div>
 
                             <div class="form-group">
                                 <label>Nama Barang <span style="color:var(--red);">*</span></label>
-                                <input type="text" id="addNamaBarang" placeholder="Masukkan nama barang lengkap"
-                                    required
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <input type="text" id="addNamaBarang" placeholder="Masukkan nama barang lengkap" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                             </div>
 
                             <div class="form-group">
                                 <label>Kategori <span style="color:var(--red);">*</span></label>
-                                <input type="text" id="addKategori"
-                                    placeholder="Contoh: Sembako, Susu, Kertas Struk, Umum" required
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <input type="text" id="addKategori" placeholder="Contoh: Sembako, Susu, Kertas Struk, Umum" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                             </div>
 
                             <div class="form-group" style="display: flex; gap: 12px;">
                                 <div style="flex: 1;">
                                     <label>Isi Per CTN</label>
-                                    <input type="number" id="addIsiCtn" min="1" value="1" placeholder="1"
-                                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                    <input type="number" id="addIsiCtn" min="1" value="1" placeholder="1" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                                 </div>
                                 <div style="flex: 1;">
                                     <label>Satuan <span style="color:var(--red);">*</span></label>
-                                    <input type="text" id="addSatuan" placeholder="PCS / ROLL / PACK" value="PCS"
-                                        required
-                                        style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                    <input type="text" id="addSatuan" placeholder="PCS / ROLL / PACK" value="PCS" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>Stok Awal Sistem (Opsional)</label>
-                                <input type="number" id="addStokAwal" min="0"
-                                    placeholder="Kosongkan jika belum ada stok"
-                                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
-                                <small
-                                    style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">Jika
-                                    dikosongkan, status tidak akan dihitung sebagai stok 0 (habis).</small>
+                                <input type="number" id="addStokAwal" min="0" placeholder="Kosongkan jika belum ada stok" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;">
+                                <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">Jika dikosongkan, status tidak akan dihitung sebagai stok 0 (habis).</small>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-full" style="margin-top: 10px;">+ Simpan
-                                Barang Baru</button>
+                            <button type="submit" class="btn btn-primary btn-full" style="margin-top: 10px;">+ Simpan Barang Baru</button>
                         </form>
                     </div>
                 </div>
@@ -459,9 +368,7 @@
                         <div><strong>Progress Terisi</strong><span id="progressText">0 / 0 item</span></div>
                         <strong id="progressPercent">0%</strong>
                     </div>
-                    <div class="progress-bar">
-                        <div id="progressBar" class="progress-fill" style="width:0%"></div>
-                    </div>
+                    <div class="progress-bar"><div id="progressBar" class="progress-fill" style="width:0%"></div></div>
                 </div>
 
                 <div class="search-card">
@@ -470,45 +377,26 @@
                         <input type="text" id="barangSearch" placeholder="Cari nama atau kode barang...">
                     </div>
                     <div class="filter-wrapper">
-                        <select id="kategoriFilter">
-                            <option value="">Semua Kategori</option>
-                        </select>
+                        <select id="kategoriFilter"><option value="">Semua Kategori</option></select>
                     </div>
                 </div>
 
-                <div id="barangContainer">
-                    <div class="loading">Memuat data barang...</div>
-                </div>
+                <div id="barangContainer"><div class="loading">Memuat data barang...</div></div>
             </section>
 
             <!-- HISTORY SECTION -->
             <section id="historyPage" class="content-page hidden">
                 <div class="section-card">
                     <div class="section-header">
-                        <div>
-                            <h3>Riwayat Stock Opname</h3>
-                            <p>Catatan seluruh kegiatan opname KDKMP</p>
-                        </div>
+                        <div><h3>Riwayat Stock Opname</h3><p>Catatan seluruh kegiatan opname KDKMP. Klik pada baris/tombol untuk melihat item barang.</p></div>
                         <button class="btn btn-secondary" onclick="loadHistory()">↻ Refresh</button>
                     </div>
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>ID Opname</th>
-                                    <th>Tanggal</th>
-                                    <th>KDKMP</th>
-                                    <th>Petugas</th>
-                                    <th>Total Item</th>
-                                    <th>Total Selisih</th>
-                                    <th>Status</th>
-                                </tr>
+                                <tr><th>ID Opname</th><th>Tanggal</th><th>KDKMP</th><th>Petugas</th><th>Total Item</th><th>Total Selisih</th><th>Detail Barang</th></tr>
                             </thead>
-                            <tbody id="historyTable">
-                                <tr>
-                                    <td colspan="7" class="empty-state">Memuat data riwayat...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="historyTable"><tr><td colspan="7" class="empty-state">Memuat data riwayat...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -535,39 +423,61 @@
                     <div class="search-card" style="margin: 16px; width: auto;">
                         <div class="search-wrapper">
                             <span class="search-icon">🔎</span>
-                            <input type="text" id="masterSearch" placeholder="Cari kode atau nama barang di master..."
-                                oninput="filterMasterTable()">
+                            <input type="text" id="masterSearch" placeholder="Cari kode atau nama barang di master..." oninput="filterMasterTable()">
                         </div>
                         <div class="filter-wrapper">
-                            <select id="masterKategoriFilter" onchange="filterMasterTable()">
-                                <option value="">Semua Kategori</option>
-                            </select>
+                            <select id="masterKategoriFilter" onchange="filterMasterTable()"><option value="">Semua Kategori</option></select>
                         </div>
                     </div>
 
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Kode Barang</th>
-                                    <th>Nama Barang</th>
-                                    <th>Kategori</th>
-                                    <th>Isi / CTN</th>
-                                    <th>Satuan</th>
-                                    <th>Stok Sistem</th>
-                                </tr>
+                                <tr><th>Kode Barang</th><th>Nama Barang</th><th>Kategori</th><th>Isi / CTN</th><th>Satuan</th><th>Stok Sistem</th></tr>
                             </thead>
-                            <tbody id="masterTableBody">
-                                <tr>
-                                    <td colspan="6" class="empty-state">Memuat data master barang...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="masterTableBody"><tr><td colspan="6" class="empty-state">Memuat data master barang...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
         </main>
+    </div>
+
+    <!-- MODAL DETAIL OPNAME -->
+    <div id="opnameDetailModal" class="modal hidden">
+        <div class="modal-box" style="max-width: 750px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 id="opnameDetailTitle" style="margin: 0; color: var(--primary);">Detail Barang Opname</h3>
+                    <span id="opnameDetailSub" style="font-size: 12px; color: var(--muted);">-</span>
+                </div>
+                <button class="sidebar-close" onclick="closeOpnameDetailModal()">×</button>
+            </div>
+            
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama Barang</th>
+                            <th>Stok Sistem</th>
+                            <th>Input Fisik</th>
+                            <th>Total Fisik</th>
+                            <th>Selisih</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="opnameDetailTableBody">
+                        <tr><td colspan="7" class="empty-state">Memuat detail barang...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="text-align: right; margin-top: 16px;">
+                <button class="btn btn-secondary" onclick="closeOpnameDetailModal()">Tutup</button>
+            </div>
+        </div>
     </div>
 
     <!-- TOAST NOTIFICATION -->
@@ -587,5 +497,4 @@
 
     <script src="script.js"></script>
 </body>
-
 </html>
